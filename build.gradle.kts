@@ -20,6 +20,7 @@ dependencies {
 
     implementation("org.jsoup:jsoup:1.15.3")
     implementation("info.picocli:picocli:4.6.3")
+    implementation("com.google.guava:guava:31.1-jre")
 
     implementation("org.apache.logging.log4j:log4j-api:2.19.0")
     implementation("org.apache.logging.log4j:log4j-core:2.19.0")

@@ -4,8 +4,9 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
 import org.apache.logging.log4j.kotlin.Logging
+import org.jsoup.nodes.Element
 
-class CrawlAndMerge {
+class CrawlAndRemoveContentDropdown {
 
     companion object : Logging
 
@@ -21,23 +22,38 @@ class CrawlAndMerge {
         }
     }
 
-    fun parse() {
+    fun parsePage() {
         val doc: Document = Jsoup.connect("https://www.projekt-gutenberg.org/jeanpaul/hesperus/hespv11.html").get()
         logger.info(doc.title())
         // remove table stuff
         doc.select(".navi-gb-ed15").remove()
+        // remove content dropdown
+        val content: Elements = doc.select(".dropdown-content").remove().clone()
         // remove content stuff
         doc.select(".dropdown").remove()
-        // remove content dropdown
-        doc.select(".dropdown-content").remove()
         // remove author on the right
         doc.select(".right").remove()
         // remove hr at end
         doc.select("hr").remove()
+
+        parseContent(content)
+
         val headers: Elements = doc.select("h1, h2, h3, h4, h5")
         logger.info(headers)
 
         System.out.println()
         System.out.println(doc.html())
+    }
+
+    fun parseContent(dropdownContent: Elements): MutableSet<String> {
+        val contentRefs: MutableSet<String> = dropdownContent
+            .select("a")
+            .fold(mutableSetOf()) {
+            s: MutableSet<String>, e: Element ->
+            s.add(e.attr("href"))
+            s
+        }
+        logger.info("contentRefs: ${contentRefs}")
+        return contentRefs
     }
 }

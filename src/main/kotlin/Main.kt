@@ -1,4 +1,4 @@
-import org.github.aanno.pgconv.CrawlAndMerge
+import org.github.aanno.pgconv.CrawlAndRemoveContentDropdown
 
 fun main(args: Array<String>) {
     println("Hello World!")
@@ -7,6 +7,6 @@ fun main(args: Array<String>) {
     // Learn more about running applications: https://www.jetbrains.com/help/idea/running-applications.html.
     println("Program arguments: ${args.joinToString()}")
 
-    val main: CrawlAndMerge = CrawlAndMerge();
-    main.parse();
+    val main: CrawlAndRemoveContentDropdown = CrawlAndRemoveContentDropdown();
+    main.parsePage();
 }
