@@ -1,4 +1,5 @@
 *.html
+*.epub
 
 ### gradle
 .gradle
