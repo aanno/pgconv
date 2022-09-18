@@ -5,10 +5,14 @@ import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
 import org.apache.logging.log4j.kotlin.Logging
 import org.jsoup.nodes.Element
+import java.io.File
 
-class CrawlAndRemoveContentDropdown {
+class CrawlAndRemoveContentDropdown(private val base: String) {
 
     companion object : Logging
+
+    private val allPages: MutableSet<String> = mutableSetOf()
+    private val visitedPages: MutableSet<String> = mutableSetOf()
 
     fun parseOld() {
         val doc: Document = Jsoup.connect("https://en.wikipedia.org/").get()
@@ -22,13 +26,25 @@ class CrawlAndRemoveContentDropdown {
         }
     }
 
-    fun parsePage() {
-        val doc: Document = Jsoup.connect("https://www.projekt-gutenberg.org/jeanpaul/hesperus/hespv11.html").get()
+    fun parsePageRec(root: String) {
+        parsePage(root)
+        do {
+            val notVisited = HashSet<String>(allPages)
+            notVisited.removeAll(visitedPages)
+            notVisited.forEach { parsePage(it) }
+        } while (!notVisited.isEmpty())
+    }
+
+    fun parsePage(page: String) {
+        val doc: Document = Jsoup.connect(base + "/" + page).get()
+        allPages.add(page)
+        visitedPages.add(page)
+
         logger.info(doc.title())
         // remove table stuff
         doc.select(".navi-gb-ed15").remove()
         // remove content dropdown
-        val content: Elements = doc.select(".dropdown-content").remove().clone()
+        val tocContent: Elements = doc.select(".dropdown-content").remove()
         // remove content stuff
         doc.select(".dropdown").remove()
         // remove author on the right
@@ -36,16 +52,17 @@ class CrawlAndRemoveContentDropdown {
         // remove hr at end
         doc.select("hr").remove()
 
-        parseContent(content)
+        parseContent(tocContent)
 
         val headers: Elements = doc.select("h1, h2, h3, h4, h5")
         logger.info(headers)
 
-        System.out.println()
-        System.out.println(doc.html())
+        // System.out.println()
+        // System.out.println(doc.html())
+        File(page).bufferedWriter().use { it.write(doc.html()) }
     }
 
-    fun parseContent(dropdownContent: Elements): MutableSet<String> {
+    fun parseContent(dropdownContent: Elements) {
         val contentRefs: MutableSet<String> = dropdownContent
             .select("a")
             .fold(mutableSetOf()) {
@@ -53,7 +70,8 @@ class CrawlAndRemoveContentDropdown {
             s.add(e.attr("href"))
             s
         }
-        logger.info("contentRefs: ${contentRefs}")
-        return contentRefs
+        allPages.addAll(contentRefs)
+        // logger.info("contentRefs: ${contentRefs}")
+        // return contentRefs
     }
 }

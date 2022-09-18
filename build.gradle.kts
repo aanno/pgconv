@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.10")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.10")
 
     implementation("org.jsoup:jsoup:1.15.3")
     implementation("info.picocli:picocli:4.6.3")
