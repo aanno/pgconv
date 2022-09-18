@@ -52,7 +52,12 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         // remove hr at end
         doc.select("hr").remove()
 
-        parseContent(tocContent)
+        // title page processing
+        doc.select(".toc").select("a").forEach { e ->
+            e.attr("href", anker2Page(e.attr("href")))
+        }
+
+        parseTocContent(tocContent)
 
         val headers: Elements = doc.select("h1, h2, h3, h4, h5")
         logger.info(headers)
@@ -62,7 +67,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         File(page).bufferedWriter().use { it.write(doc.html()) }
     }
 
-    fun parseContent(dropdownContent: Elements) {
+    fun parseTocContent(dropdownContent: Elements) {
         val contentRefs: MutableSet<String> = dropdownContent
             .select("a")
             .fold(mutableSetOf()) {
@@ -73,5 +78,17 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         allPages.addAll(contentRefs)
         // logger.info("contentRefs: ${contentRefs}")
         // return contentRefs
+    }
+
+}
+
+fun anker2Page(anker: String): String {
+    val size = anker.length;
+    if (size <= 1) {
+        return anker
+    } else if (anker.get(0) == '#') {
+        return anker.substring(1) + ".html"
+    } else {
+        return anker
     }
 }
