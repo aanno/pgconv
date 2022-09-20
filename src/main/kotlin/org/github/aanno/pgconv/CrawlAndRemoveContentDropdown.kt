@@ -41,7 +41,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     fun parsePage(page: String) {
         logger.info("Processing ${page}")
-        val doc: Document = Jsoup.connect(base + "/" + page).get()
+        val doc: Document = connectWithProxyEnv(base + "/" + page).get()
         allPages.add(page)
         visitedPages.add(page)
 
@@ -142,8 +142,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 fun toNextElementSibling(el: Node, expected: String): Element? {
     var result: Node? = el;
     do {
-        result = el.nextSibling()
-    } while (result != null && !(result is Element) &&
-        !((result as Element).`is`(expected) || !(result as Element).`is`("br")))
+        result = result!!.nextSibling()
+    } while (result != null &&
+        !((result is Element) && ((result as Element).`is`(expected) || !(result as Element).`is`("br"))))
     return result as Element?
 }
