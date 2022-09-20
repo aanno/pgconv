@@ -110,7 +110,11 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             val nextNav: Element? = toNextElementSibling(prevNav, "a", true)
 
             val prevKnown = allPages.contains(prevNav.attr("href"))
-            val nextKnown = allPages.contains(nextNav!!.attr("href"))
+            val nextKnown = if (nextNav != null) {
+                allPages.contains(nextNav!!.attr("href"))
+            } else {
+                null
+            }
 
             logger.debug("prevNav: ${prevNav} ${prevKnown}")
             logger.debug("nextNav: ${nextNav} ${nextKnown}")
@@ -152,5 +156,9 @@ fun toNextElementSibling(el: Node, expected: String, remove: Boolean): Element? 
         if (remove && old != el) old!!.remove()
     } while (result != null &&
         !((result is Element) && (result.`is`(expected) || !result.`is`("br"))))
+    // only return if it is the expected element
+    if (result != null && !(result as Element).`is`(expected)) {
+        return null
+    }
     return result as Element?
 }
