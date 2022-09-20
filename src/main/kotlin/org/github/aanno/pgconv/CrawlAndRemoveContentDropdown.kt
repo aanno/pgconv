@@ -84,7 +84,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             var cont = true
             // delete all before until body
             do {
-                val test = prevNav!!.previousElementSibling()
+                val test = prevNav.previousElementSibling()
                 if (test != null && !test.`is`("body")) {
                     test.remove()
                 } else {
@@ -94,7 +94,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // author tag => use next anchor
             if (prevNav.attr("href").startsWith("/autoren/")) {
                 val auth = prevNav
-                prevNav = toNextElementSibling(prevNav, "a")
+                prevNav = toNextElementSibling(prevNav, "a", true)
                 if (prevNav == null) {
                     logger.warn("Expected prevNav after author")
                 } else if (!prevNav.`is`("a")) {
@@ -106,9 +106,14 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         }
         // find nextNav
         if (prevNav != null) {
-            var nextNav: Element? = doc.selectFirst("a")
-            logger.debug("prevNav: ${prevNav}")
-            logger.debug("nextNav: ${nextNav}")
+            // var nextNav: Element? = doc.selectFirst("a")
+            val nextNav: Element? = toNextElementSibling(prevNav, "a", true)
+
+            val prevKnown = allPages.contains(prevNav.attr("href"))
+            val nextKnown = allPages.contains(nextNav!!.attr("href"))
+
+            logger.debug("prevNav: ${prevNav} ${prevKnown}")
+            logger.debug("nextNav: ${nextNav} ${nextKnown}")
         }
     }
 
@@ -139,11 +144,13 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 }
 
 @Nullable
-fun toNextElementSibling(el: Node, expected: String): Element? {
+fun toNextElementSibling(el: Node, expected: String, remove: Boolean): Element? {
     var result: Node? = el;
     do {
+        val old = result
         result = result!!.nextSibling()
+        if (remove && old != el) old!!.remove()
     } while (result != null &&
-        !((result is Element) && ((result as Element).`is`(expected) || !(result as Element).`is`("br"))))
+        !((result is Element) && (result.`is`(expected) || !result.`is`("br"))))
     return result as Element?
 }
