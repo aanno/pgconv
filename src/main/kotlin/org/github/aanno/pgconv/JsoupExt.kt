@@ -6,9 +6,9 @@ import java.lang.BootstrapMethodError
 import java.lang.IllegalStateException
 import java.net.URL
 
-var proxyHaveRun = false
-var httpProxy: URL? = null
-var httpsProxy: URL? = null
+private var proxyHaveRun = false
+private var httpProxy: URL? = null
+private var httpsProxy: URL? = null
 
 private fun findEnvValueUrl(propKeyPrefix: String, envKey: String): URL? {
     var result: String? = System.getProperty(propKeyPrefix + "Host")

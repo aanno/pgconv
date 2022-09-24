@@ -14,6 +14,8 @@ fun main(args: Array<String>) {
     val base = url.substring(0, idx)
     val root = url.substring(idx + 1)
 
+    val start: Long = System.currentTimeMillis();
     val main: CrawlAndRemoveContentDropdown = CrawlAndRemoveContentDropdown(base);
     main.parsePageRec(root)
+    println("time for conversion: " + (System.currentTimeMillis() - start) + "ms")
 }

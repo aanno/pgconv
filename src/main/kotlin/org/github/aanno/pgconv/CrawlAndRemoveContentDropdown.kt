@@ -1,5 +1,13 @@
 package org.github.aanno.pgconv
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.coroutineScope
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
@@ -31,15 +39,23 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
     fun parsePageRec(root: String) {
-        parsePage(root)
-        do {
-            val notVisited = HashSet<String>(allPages)
-            notVisited.removeAll(visitedPages)
-            notVisited.forEach { parsePage(it) }
-        } while (!notVisited.isEmpty())
+        val jobs: MutableList<Job> = mutableListOf()
+        runBlocking<Unit> {
+            coroutineScope {
+                parsePage(root)
+            }
+            do {
+                val notVisited = HashSet<String>(allPages)
+                notVisited.removeAll(visitedPages)
+                notVisited.forEach { jobs.add(launch { parsePage(it) }) }
+                // logger.debug("jobs: ${jobs}")
+                joinAll(*jobs.toTypedArray())
+                jobs.clear()
+            } while (!notVisited.isEmpty())
+        }
     }
 
-    fun parsePage(page: String) {
+    suspend fun parsePage(page: String) = coroutineScope {
         logger.info("Processing ${page}")
         val doc: Document = connectWithProxyEnv(base + "/" + page).get()
         allPages.add(page)
@@ -155,7 +171,8 @@ fun toNextElementSibling(el: Node, expected: String, remove: Boolean): Element? 
         result = result!!.nextSibling()
         if (remove && old != el) old!!.remove()
     } while (result != null &&
-        !((result is Element) && (result.`is`(expected) || !result.`is`("br"))))
+        !((result is Element) && (result.`is`(expected) || !result.`is`("br")))
+    )
     // only return if it is the expected element
     if (result != null && !(result as Element).`is`(expected)) {
         return null
