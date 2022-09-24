@@ -1,13 +1,7 @@
 package org.github.aanno.pgconv
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
@@ -21,7 +15,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     companion object : Logging
 
-    private val allPages: MutableSet<String> = mutableSetOf()
+    private val pageChannel = Channel<String>(1000)
     private val visitedPages: MutableSet<String> = mutableSetOf()
 
     fun parseOld() {
@@ -39,26 +33,23 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
     fun parsePageRec(root: String) {
-        val jobs: MutableList<Job> = mutableListOf()
         runBlocking<Unit> {
-            coroutineScope {
-                parsePage(root)
+            launch(Dispatchers.Default) { pageChannel.send(root) }
+            launch(Dispatchers.Default) { parsePage() }
+        }
+        runBlocking<Unit> {
+            launch(Dispatchers.Default) {
+                // TODO
+                while(true) parsePage()
             }
-            do {
-                val notVisited = HashSet<String>(allPages)
-                notVisited.removeAll(visitedPages)
-                notVisited.forEach { jobs.add(launch { parsePage(it) }) }
-                // logger.debug("jobs: ${jobs}")
-                joinAll(*jobs.toTypedArray())
-                jobs.clear()
-            } while (!notVisited.isEmpty())
         }
     }
 
-    suspend fun parsePage(page: String) = coroutineScope {
+    suspend fun parsePage() {
+        val page = pageChannel.receive()
         logger.info("Processing ${page}")
+
         val doc: Document = connectWithProxyEnv(base + "/" + page).get()
-        allPages.add(page)
         visitedPages.add(page)
 
         logger.debug(doc.title())
@@ -125,9 +116,9 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // var nextNav: Element? = doc.selectFirst("a")
             val nextNav: Element? = toNextElementSibling(prevNav, "a", true)
 
-            val prevKnown = allPages.contains(prevNav.attr("href"))
+            val prevKnown = visitedPages.contains(prevNav.attr("href"))
             val nextKnown = if (nextNav != null) {
-                allPages.contains(nextNav!!.attr("href"))
+                visitedPages.contains(nextNav!!.attr("href"))
             } else {
                 null
             }
@@ -138,14 +129,19 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
 
-    fun parseTocContent(dropdownContent: Elements) {
-        val contentRefs: MutableSet<String> = dropdownContent
+    suspend fun parseTocContent(dropdownContent: Elements) {
+        logger.debug("parseTocContent")
+        dropdownContent
             .select("a")
-            .fold(mutableSetOf()) { s: MutableSet<String>, e: Element ->
-                s.add(e.attr("href"))
-                s
+            .forEach { e: Element ->
+                val page = e.attr("href")
+                if (!visitedPages.contains(page)) {
+                    logger.debug("new page found: ${page}")
+                    pageChannel.send(page)
+                }
             }
-        allPages.addAll(contentRefs)
+        // TODO
+        pageChannel.cancel()
     }
 
 
@@ -155,9 +151,11 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             return anchor
         } else if (anchor.get(0) == '#') {
             val result = anchor.substring(1) + ".html"
+            /*
             if (!allPages.contains(result)) {
                 logger.error("${result} does not refer to known page")
             }
+             */
         }
         return anchor
     }
