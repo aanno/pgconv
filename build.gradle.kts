@@ -31,23 +31,20 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
-/*
+
 idea {
     module {
-        downloadJavadoc = true
-        downloadSources = true
+        setDownloadJavadoc(true)
+        setDownloadSources(true)
     }
 }
- */
 
-/*
 eclipse {
     classpath {
-        downloadJavadoc = true
-        downloadSources = true
+        setDownloadJavadoc(true)
+        setDownloadSources(true)
     }
 }
- */
 
 tasks {
     withType<KotlinCompile> {
