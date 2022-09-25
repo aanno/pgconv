@@ -8,7 +8,7 @@ plugins {
     application
 }
 
-group = "org.github.aanno"
+group = "org.github.aanno.pgconv"
 version = "1.0-SNAPSHOT"
 
 repositories {

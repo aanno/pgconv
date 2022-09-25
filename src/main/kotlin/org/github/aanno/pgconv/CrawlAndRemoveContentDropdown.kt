@@ -9,14 +9,18 @@ import org.apache.logging.log4j.kotlin.Logging
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import java.io.File
+import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
 class CrawlAndRemoveContentDropdown(private val base: String) {
 
     companion object : Logging
 
-    private val pageChannel = Channel<String>(1000)
-    private val visitedPages: MutableSet<String> = mutableSetOf()
+    private val lastAction = AtomicLong(System.currentTimeMillis())
+    private val pageChannel = Channel<String>(Channel.UNLIMITED)
+    private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
+    private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
 
     fun parseOld() {
         val doc: Document = Jsoup.connect("https://en.wikipedia.org/").get()
@@ -34,23 +38,33 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     fun parsePageRec(root: String) {
         runBlocking<Unit> {
-            launch(Dispatchers.Default) { pageChannel.send(root) }
-            launch(Dispatchers.Default) { parsePage() }
-        }
-        runBlocking<Unit> {
-            launch(Dispatchers.Default) {
-                // TODO
-                while(true) parsePage()
-            }
+            val rootSender = GlobalScope.launch(Dispatchers.Default) { pageChannel.send(root) }
+            val rootReceiver = GlobalScope.launch(Dispatchers.Default) { parsePage() }
+            // delay(5000)
+            joinAll(rootSender, rootReceiver)
+            val jobs: MutableList<Job> = mutableListOf()
+            var current = System.currentTimeMillis()
+            do {
+                GlobalScope.launch(Dispatchers.Default) {
+                    jobs.plus(parsePage())
+                }
+                if (pageChannel.isEmpty) delay(5000)
+                current = System.currentTimeMillis()
+            } while (!pageChannel.isEmpty || current - lastAction.get() <= 10000)
+            // joinAll(*jobs.toTypedArray())
         }
     }
 
     suspend fun parsePage() {
         val page = pageChannel.receive()
         logger.info("Processing ${page}")
+        lastAction.set(System.currentTimeMillis())
 
         val doc: Document = connectWithProxyEnv(base + "/" + page).get()
-        visitedPages.add(page)
+        if (!visitedPages.add(page)) {
+            // already done
+            return
+        }
 
         logger.debug(doc.title())
         // remove table stuff
@@ -116,9 +130,9 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // var nextNav: Element? = doc.selectFirst("a")
             val nextNav: Element? = toNextElementSibling(prevNav, "a", true)
 
-            val prevKnown = visitedPages.contains(prevNav.attr("href"))
+            val prevKnown = allPages.contains(prevNav.attr("href"))
             val nextKnown = if (nextNav != null) {
-                visitedPages.contains(nextNav!!.attr("href"))
+                allPages.contains(nextNav!!.attr("href"))
             } else {
                 null
             }
@@ -135,13 +149,12 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             .select("a")
             .forEach { e: Element ->
                 val page = e.attr("href")
-                if (!visitedPages.contains(page)) {
+                if (!allPages.contains(page)) {
                     logger.debug("new page found: ${page}")
+                    allPages.add(page)
                     pageChannel.send(page)
                 }
             }
-        // TODO
-        pageChannel.cancel()
     }
 
 
