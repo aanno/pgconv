@@ -40,18 +40,14 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         runBlocking<Unit> {
             val rootSender = GlobalScope.launch(Dispatchers.Default) { pageChannel.send(root) }
             val rootReceiver = GlobalScope.launch(Dispatchers.Default) { parsePage() }
-            // delay(5000)
-            joinAll(rootSender, rootReceiver)
-            val jobs: MutableList<Job> = mutableListOf()
             var current = System.currentTimeMillis()
             do {
                 GlobalScope.launch(Dispatchers.Default) {
-                    jobs.plus(parsePage())
+                    parsePage()
                 }
-                if (pageChannel.isEmpty) delay(5000)
+                if (pageChannel.isEmpty) delay(1000)
                 current = System.currentTimeMillis()
-            } while (!pageChannel.isEmpty || current - lastAction.get() <= 10000)
-            // joinAll(*jobs.toTypedArray())
+            } while (current - lastAction.get() <= 5000)
         }
     }
 
@@ -145,16 +141,19 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     suspend fun parseTocContent(dropdownContent: Elements) {
         logger.debug("parseTocContent")
-        dropdownContent
+        val elements = dropdownContent
             .select("a")
-            .forEach { e: Element ->
-                val page = e.attr("href")
-                if (!allPages.contains(page)) {
-                    logger.debug("new page found: ${page}")
-                    allPages.add(page)
-                    pageChannel.send(page)
+            .map { it.attr("href") }
+        elements
+            .forEach {
+                if (!allPages.contains(it)) {
+                    allPages.add(it)
+                    logger.debug("new page found: ${it}")
+                    pageChannel.send(it)
                 }
             }
+        // bader performance
+        // allPages.addAll(elements)
     }
 
 
