@@ -30,3 +30,11 @@ See [usage](https://github.com/gutenbergtools/ebookmaker/blob/master/USAGE.md) f
 * https://github.com/digitalfondue/jfiveparse
 * https://github.com/codelibs/nekohtml
 * https://github.com/peteroupc/HtmlParser
+
+## Kotlin Coroutines
+
+The following helped me a lot to understand using coroutines in the crawler use-case
+
+* https://github.com/brianmadden/krawler - a coroutine-based crawler in kotlin
+* https://stackoverflow.com/questions/73659561/how-to-use-kotlin-coroutines-with-two-for-loops-and-channels-that-update-each-ot
+
