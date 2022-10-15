@@ -41,57 +41,59 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             GlobalScope.launch {
                 pageChannel.send(root)
             }
+            var current = System.currentTimeMillis()
             do {
-                if (pageChannel.isEmpty) delay(500)
-                else
-                    GlobalScope.launch {
-                        parsePage()
-                    }
-            } while (System.currentTimeMillis() - lastAction.get() <= 5000)
+                if (pageChannel.isEmpty) {
+                    delay(500)
+                    current = System.currentTimeMillis()
+                } else {
+                    parsePage()
+                }
+            } while (current - lastAction.get() <= 5000)
         }
     }
 
     suspend fun parsePage() {
         val page = pageChannel.receive()
-        logger.info("Processing ${page}")
-        lastAction.set(System.currentTimeMillis())
+        GlobalScope.launch {
+            val doc: Document = connectWithProxyEnv(base + "/" + page).get()
+            if (visitedPages.add(page)) {
+                lastAction.set(System.currentTimeMillis())
+                logger.info("Processing ${page}")
 
-        val doc: Document = connectWithProxyEnv(base + "/" + page).get()
-        if (!visitedPages.add(page)) {
-            // already done
-            return
+                // not already done
+                logger.debug(doc.title())
+                // remove table stuff
+                doc.select(".navi-gb-ed15").remove()
+                // remove content dropdown
+                val tocContent: Elements = doc.select(".dropdown-content").remove()
+                parseTocContent(tocContent)
+                // remove content stuff
+                doc.select(".dropdown").remove()
+                // remove author on the right
+                doc.select(".right").remove()
+                // remove hr at end
+                doc.select("hr").remove()
+                // remove all js
+                doc.select("script").remove()
+
+                // title page processing
+                val toc: Elements = doc.select(".toc")
+                toc.select("a").forEach { e ->
+                    e.attr("href", anchor2Page(e.attr("href")))
+                }
+                val normalPage = toc.isEmpty()
+
+                parseNav(doc)
+
+                val headers: Elements = doc.select("h1, h2, h3, h4, h5")
+                logger.debug(headers)
+
+                // System.out.println()
+                // System.out.println(doc.html())
+                File(page).bufferedWriter().use { it.write(doc.html()) }
+            }
         }
-
-        logger.debug(doc.title())
-        // remove table stuff
-        doc.select(".navi-gb-ed15").remove()
-        // remove content dropdown
-        val tocContent: Elements = doc.select(".dropdown-content").remove()
-        parseTocContent(tocContent)
-        // remove content stuff
-        doc.select(".dropdown").remove()
-        // remove author on the right
-        doc.select(".right").remove()
-        // remove hr at end
-        doc.select("hr").remove()
-        // remove all js
-        doc.select("script").remove()
-
-        // title page processing
-        val toc: Elements = doc.select(".toc")
-        toc.select("a").forEach { e ->
-            e.attr("href", anchor2Page(e.attr("href")))
-        }
-        val normalPage = toc.isEmpty()
-
-        parseNav(doc)
-
-        val headers: Elements = doc.select("h1, h2, h3, h4, h5")
-        logger.debug(headers)
-
-        // System.out.println()
-        // System.out.println(doc.html())
-        File(page).bufferedWriter().use { it.write(doc.html()) }
     }
 
     fun parseNav(doc: Document) {
