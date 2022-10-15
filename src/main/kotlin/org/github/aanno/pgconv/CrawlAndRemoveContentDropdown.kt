@@ -37,17 +37,17 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
     fun parsePageRec(root: String) {
-        runBlocking<Unit> {
-            val rootSender = GlobalScope.launch(Dispatchers.Default) { pageChannel.send(root) }
-            val rootReceiver = GlobalScope.launch(Dispatchers.Default) { parsePage() }
-            var current = System.currentTimeMillis()
+        runBlocking<Unit>(Dispatchers.Default) {
+            GlobalScope.launch {
+                pageChannel.send(root)
+            }
             do {
-                GlobalScope.launch(Dispatchers.Default) {
-                    parsePage()
-                }
-                if (pageChannel.isEmpty) delay(1000)
-                current = System.currentTimeMillis()
-            } while (current - lastAction.get() <= 5000)
+                if (pageChannel.isEmpty) delay(500)
+                else
+                    GlobalScope.launch {
+                        parsePage()
+                    }
+            } while (System.currentTimeMillis() - lastAction.get() <= 5000)
         }
     }
 
