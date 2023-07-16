@@ -1,4 +1,6 @@
-import org.github.aanno.pgconv.CrawlAndRemoveContentDropdown
+package org.github.aanno.pgconv
+
+import org.github.aanno.pgconv.impl.CrawlAndRemoveContentDropdown
 
 fun main(args: Array<String>) {
     println("Hello World!")

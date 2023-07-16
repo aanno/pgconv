@@ -1,4 +1,4 @@
-package org.github.aanno.pgconv
+package org.github.aanno.pgconv.impl
 
 import org.jsoup.Connection
 import org.jsoup.Jsoup

@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val kotlinVersion by properties
@@ -6,6 +7,8 @@ val kotlinxCoroutines by properties
 val jsoupVersion by properties
 val log4jVersion by properties
 val log4jApiKotlinVersion by properties
+val pgconvModuleName by properties
+val jdkVersion by properties
 
 plugins {
     java
@@ -20,6 +23,18 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+}
+
+kotlin {
+    jvmToolchain(jdkVersion.toString().toInt())
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+// needed?
+java {
+    modularity.inferModulePath.set(true)
 }
 
 dependencies {
@@ -57,7 +72,30 @@ eclipse {
 
 tasks {
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
+        kotlinOptions {
+            jvmTarget = jdkVersion.toString()
+            moduleName = pgconvModuleName.toString()
+        }
+        compilerOptions {
+            moduleName = pgconvModuleName.toString()
+        }
+    }
+
+    // https://kotlinlang.org/docs/whatsnew19.html#compiler-option-for-kotlin-native-module-name
+    /*
+    named<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>("compileKotlinLinuxX64") {
+        compilerOptions {
+            moduleName.set("" + pgconvModuleName)
+        }
+    }
+     */
+
+    // https://kotlinlang.org/docs/gradle-configure-project.html#configure-with-java-modules-jpms-enabled
+    named("compileJava", JavaCompile::class.java) {
+        options.compilerArgumentProviders.add(CommandLineArgumentProvider {
+            // Provide compiled Kotlin classes to javac – needed for Java/Kotlin mixed sources to work
+            listOf("--patch-module", "${pgconvModuleName}=${sourceSets["main"].output.asPath}")
+        })
     }
 
     test {
@@ -71,5 +109,7 @@ tasks {
 
 
 application {
-    mainClass.set("MainKt")
+    // https://docs.gradle.org/current/userguide/application_plugin.html#sec:application_modular
+    mainModule.set(pgconvModuleName.toString())
+    mainClass.set("org.github.aanno.pgconv.MainKt")
 }

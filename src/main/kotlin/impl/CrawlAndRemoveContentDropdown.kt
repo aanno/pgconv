@@ -1,4 +1,4 @@
-package org.github.aanno.pgconv
+package org.github.aanno.pgconv.impl
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
