@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="MainKt" type="JetRunConfigurationType" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="MainKt" />
+    <option name="MAIN_CLASS_NAME" value="org.github.aanno.pgconv.MainKt" />
     <module name="pgconv.main" />
     <shortenClasspath name="ARGS_FILE" />
     <method v="2">

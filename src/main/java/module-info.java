@@ -1,4 +1,4 @@
-module org.github.aanno.pgconf {
+module org.github.aanno.pgconv {
     requires kotlin.stdlib;
     requires org.jsoup;
     requires jdk.unsupported;

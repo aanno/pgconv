@@ -74,10 +74,10 @@ tasks {
     withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = jdkVersion.toString()
-            moduleName = pgconvModuleName.toString()
+            // moduleName = pgconvModuleName.toString()
         }
         compilerOptions {
-            moduleName = pgconvModuleName.toString()
+            // moduleName = pgconvModuleName.toString()
         }
     }
 
