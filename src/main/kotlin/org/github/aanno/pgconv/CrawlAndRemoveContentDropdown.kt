@@ -36,6 +36,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         }
     }
 
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
     fun parsePageRec(root: String) {
         runBlocking<Unit>(Dispatchers.Default) {
             GlobalScope.launch {
@@ -55,44 +56,42 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     suspend fun parsePage() {
         val page = pageChannel.receive()
-        GlobalScope.launch {
+        if (visitedPages.add(page)) GlobalScope.launch {
+            lastAction.set(System.currentTimeMillis())
             val doc: Document = connectWithProxyEnv(base + "/" + page).get()
-            if (visitedPages.add(page)) {
-                lastAction.set(System.currentTimeMillis())
-                logger.info("Processing ${page}")
+            logger.info("Processing ${page}")
 
-                // not already done
-                logger.debug(doc.title())
-                // remove table stuff
-                doc.select(".navi-gb-ed15").remove()
-                // remove content dropdown
-                val tocContent: Elements = doc.select(".dropdown-content").remove()
-                parseTocContent(tocContent)
-                // remove content stuff
-                doc.select(".dropdown").remove()
-                // remove author on the right
-                doc.select(".right").remove()
-                // remove hr at end
-                doc.select("hr").remove()
-                // remove all js
-                doc.select("script").remove()
+            // not already done
+            logger.debug(doc.title())
+            // remove table stuff
+            doc.select(".navi-gb-ed15").remove()
+            // remove content dropdown
+            val tocContent: Elements = doc.select(".dropdown-content").remove()
+            parseTocContent(tocContent)
+            // remove content stuff
+            doc.select(".dropdown").remove()
+            // remove author on the right
+            doc.select(".right").remove()
+            // remove hr at end
+            doc.select("hr").remove()
+            // remove all js
+            doc.select("script").remove()
 
-                // title page processing
-                val toc: Elements = doc.select(".toc")
-                toc.select("a").forEach { e ->
-                    e.attr("href", anchor2Page(e.attr("href")))
-                }
-                val normalPage = toc.isEmpty()
-
-                parseNav(doc)
-
-                val headers: Elements = doc.select("h1, h2, h3, h4, h5")
-                logger.debug(headers)
-
-                // System.out.println()
-                // System.out.println(doc.html())
-                File(page).bufferedWriter().use { it.write(doc.html()) }
+            // title page processing
+            val toc: Elements = doc.select(".toc")
+            toc.select("a").forEach { e ->
+                e.attr("href", anchor2Page(e.attr("href")))
             }
+            val normalPage = toc.isEmpty()
+
+            parseNav(doc)
+
+            val headers: Elements = doc.select("h1, h2, h3, h4, h5")
+            logger.debug(headers)
+
+            // System.out.println()
+            // System.out.println(doc.html())
+            File(page).bufferedWriter().use { it.write(doc.html()) }
         }
     }
 
@@ -130,7 +129,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
             val prevKnown = allPages.contains(prevNav.attr("href"))
             val nextKnown = if (nextNav != null) {
-                allPages.contains(nextNav!!.attr("href"))
+                allPages.contains(nextNav.attr("href"))
             } else {
                 null
             }

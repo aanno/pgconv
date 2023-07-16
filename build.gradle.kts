@@ -1,10 +1,17 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+val kotlinVersion by properties
+val jsr305Version by properties
+val kotlinxCoroutines by properties
+val jsoupVersion by properties
+val log4jVersion by properties
+val log4jApiKotlinVersion by properties
+
 plugins {
     java
     idea
     eclipse
-    kotlin("jvm") version "1.7.10"
+    kotlin("jvm") version "1.9.0"
     application
 }
 
@@ -16,19 +23,19 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.10")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.10")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinxCoroutines}")
 
-    implementation("com.google.code.findbugs:jsr305:3.0.2")
+    implementation("com.google.code.findbugs:jsr305:${jsr305Version}")
 
-    implementation("org.jsoup:jsoup:1.15.3")
-    implementation("info.picocli:picocli:4.6.3")
+    implementation("org.jsoup:jsoup:${jsoupVersion}")
+    // implementation("info.picocli:picocli:4.6.3")
     // implementation("com.google.guava:guava:31.1-jre")
 
-    implementation("org.apache.logging.log4j:log4j-api:2.19.0")
-    implementation("org.apache.logging.log4j:log4j-core:2.19.0")
-    implementation("org.apache.logging.log4j:log4j-api-kotlin:1.2.0")
+    implementation("org.apache.logging.log4j:log4j-api:${log4jVersion}")
+    implementation("org.apache.logging.log4j:log4j-core:${log4jVersion}")
+    implementation("org.apache.logging.log4j:log4j-api-kotlin:${log4jApiKotlinVersion}")
 
     testImplementation(kotlin("test"))
 }
