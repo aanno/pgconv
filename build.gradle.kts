@@ -16,6 +16,7 @@ plugins {
     eclipse
     kotlin("jvm") version "1.9.0"
     application
+    distribution
 }
 
 group = "org.github.aanno.pgconv"
@@ -78,6 +79,7 @@ tasks {
         }
         compilerOptions {
             // moduleName = pgconvModuleName.toString()
+            // freeCompilerArgs.add("-module-name ${pgconvModuleName}")
         }
     }
 
@@ -110,6 +112,6 @@ tasks {
 
 application {
     // https://docs.gradle.org/current/userguide/application_plugin.html#sec:application_modular
-    mainModule.set(pgconvModuleName.toString())
+    // mainModule.set(pgconvModuleName.toString())
     mainClass.set("org.github.aanno.pgconv.MainKt")
 }
