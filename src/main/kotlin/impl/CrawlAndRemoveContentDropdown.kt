@@ -1,8 +1,10 @@
 package org.github.aanno.pgconv.impl
 
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import net.dankito.readability4j.Readability4J
 import net.dankito.readability4j.extended.Readability4JExtended
 import org.apache.logging.log4j.kotlin.Logging
 import org.jsoup.Jsoup
@@ -15,11 +17,15 @@ import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
+private val USE_READABILITY4J = true
+
 private data class ReadabilityDocument(val file: File, val document: Document)
 
 class CrawlAndRemoveContentDropdown(private val base: String) {
 
     companion object : Logging
+
+    private var metaTags: Multimap<String, String> = HashMultimap.create()
 
     private val lastAction = AtomicLong(System.currentTimeMillis())
     private val pageChannel = Channel<String>(Channel.UNLIMITED)
@@ -62,6 +68,10 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             pageChannel.close()
             // TODO
             // readability.close()
+            logger.info("Meta:");
+            metaTags.keySet().forEach {
+                logger.info("${it} -> ${metaTags[it]}")
+            }
         }
     }
 
@@ -96,12 +106,25 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             val normalPage = toc.isEmpty()
 
             parseNav(doc)
+            storeMeta(doc)
 
             val headers: Elements = doc.select("h1, h2, h3, h4, h5")
             logger.debug(headers)
 
             val pageFile = File(page).canonicalFile
             readability.send(ReadabilityDocument(pageFile, doc))
+        }
+    }
+
+    suspend fun storeMeta(doc: Document) {
+        doc.select("meta").forEach {
+            val name = it.attr("name")
+            val httpEquiv = it.attr("http-equiv")
+            val key = if (name.isNullOrBlank()) httpEquiv else name
+            val value = it.attr("content") ?: ""
+            if (key != null) {
+                metaTags.put(key, value)
+            }
         }
     }
 
@@ -115,17 +138,21 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
     private fun applyReadability(rd: ReadabilityDocument) {
-        val readability = Readability4JExtended(rd.file.parentFile.toURI().toString(), rd.document)
-        // https://github.com/bejean/Readability4J
-        val article = readability.parse()
-        // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
-        val extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
-        // val extractedContentPlainText: String = article.getTextContent()
-        val title = article.title
-        val byline = article.byline
-        val excerpt = article.excerpt
-
-        logger.info("${rd.file}: ${title}")
+        var extractedContentHtmlWithUtf8Encoding: String? = null
+        if (USE_READABILITY4J) {
+            val readability = Readability4JExtended(rd.file.parentFile.toURI().toString(), rd.document)
+            // https://github.com/bejean/Readability4J
+            val article = readability.parse()
+            // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
+            extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
+            // val extractedContentPlainText: String = article.getTextContent()
+            val title = article.title
+            val byline = article.byline
+            val excerpt = article.excerpt
+            logger.info("${rd.file}: ${title}")
+        } else {
+            extractedContentHtmlWithUtf8Encoding = rd.document.html()
+        }
         rd.file.bufferedWriter().use {
             it.write(extractedContentHtmlWithUtf8Encoding)
         }
@@ -189,7 +216,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
                     pageChannel.send(it)
                 }
             }
-        // bader performance
+        // decreased performance
         // allPages.addAll(elements)
     }
 

@@ -1,15 +1,17 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+val kotlinxCoroutines by properties
+
 val kotlinVersion by properties
 val jsr305Version by properties
-val kotlinxCoroutines by properties
 val jsoupVersion by properties
 val log4jVersion by properties
 val log4jApiKotlinVersion by properties
 val pgconvModuleName by properties
 val jdkVersion by properties
 val readability4jVersion by properties
+val guavaVersion by properties
 
 plugins {
     java
@@ -49,7 +51,7 @@ dependencies {
     implementation("org.jsoup:jsoup:${jsoupVersion}")
     implementation("net.dankito.readability4j:readability4j:${readability4jVersion}")
     // implementation("info.picocli:picocli:4.6.3")
-    // implementation("com.google.guava:guava:31.1-jre")
+    implementation("com.google.guava:guava:${guavaVersion}")
 
     implementation("org.apache.logging.log4j:log4j-api:${log4jVersion}")
     implementation("org.apache.logging.log4j:log4j-core:${log4jVersion}")
