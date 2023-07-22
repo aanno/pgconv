@@ -77,10 +77,10 @@ tasks {
     withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = jdkVersion.toString()
-            // moduleName = pgconvModuleName.toString()
+            moduleName = pgconvModuleName.toString()
         }
         compilerOptions {
-            // moduleName = pgconvModuleName.toString()
+            moduleName = pgconvModuleName.toString()
             // freeCompilerArgs.add("-module-name ${pgconvModuleName}")
         }
     }
@@ -114,6 +114,14 @@ tasks {
 
 application {
     // https://docs.gradle.org/current/userguide/application_plugin.html#sec:application_modular
-    // mainModule.set(pgconvModuleName.toString())
-    mainClass.set("org.github.aanno.pgconv.MainKt")
+    mainModule = pgconvModuleName.toString()
+    mainClass = "org.github.aanno.pgconv.MainKt"
+    applicationDefaultJvmArgs = listOf(
+        // reflective access
+        "--add-opens", "org.github.aanno.pgconv/org.github.aanno.pgconv=ALL-UNNAMED"
+        // reflective access
+        , "--add-opens", "org.github.aanno.pgconv/org.github.aanno.pgconv.impl=ALL-UNNAMED"
+        // compile-time access
+        , "--add-reads", "org.github.aanno.pgconv=ALL-UNNAMED"
+    )
 }

@@ -2,6 +2,7 @@
   <configuration default="false" name="Main" type="Application" factoryName="Application" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="org.github.aanno.pgconv.Main" />
     <module name="pgconv.main" />
+    <option name="VM_PARAMETERS" value="--add-opens org.github.aanno.pgconv/org.github.aanno.pgconv=ALL-UNNAMED --add-opens org.github.aanno.pgconv/org.github.aanno.pgconv.impl=ALL-UNNAMED --add-reads org.github.aanno.pgconv=ALL-UNNAMED" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
