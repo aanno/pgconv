@@ -15,6 +15,8 @@ import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
+private data class ReadabilityDocument(val file: File, val document: Document)
+
 class CrawlAndRemoveContentDropdown(private val base: String) {
 
     companion object : Logging
@@ -23,7 +25,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private val pageChannel = Channel<String>(Channel.UNLIMITED)
     private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
-    private val readability = Channel<File>(Channel.UNLIMITED)
+    private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
 
     fun parseOld() {
         val doc: Document = Jsoup.connect("https://en.wikipedia.org/").get()
@@ -98,13 +100,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             val headers: Elements = doc.select("h1, h2, h3, h4, h5")
             logger.debug(headers)
 
-            // System.out.println()
-            // System.out.println(doc.html())
             val pageFile = File(page).canonicalFile
-            pageFile.bufferedWriter().use {
-                it.write(doc.html())
-                readability.send(pageFile)
-            }
+            readability.send(ReadabilityDocument(pageFile, doc))
         }
     }
 
@@ -117,9 +114,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         } while (!readability.isEmpty || !readability.isClosedForReceive)
     }
 
-    fun applyReadability(file: File) {
-        /*
-        val readability = Readability4J(file.parentFile.toURI().toString(), file.toURI().toString())
+    private fun applyReadability(rd: ReadabilityDocument) {
+        val readability = Readability4JExtended(rd.file.parentFile.toURI().toString(), rd.document)
         // https://github.com/bejean/Readability4J
         val article = readability.parse()
         // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
@@ -129,11 +125,10 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         val byline = article.byline
         val excerpt = article.excerpt
 
-        logger.info("${file}: ${title}")
-        file.bufferedWriter().use {
+        logger.info("${rd.file}: ${title}")
+        rd.file.bufferedWriter().use {
             it.write(extractedContentHtmlWithUtf8Encoding)
         }
-         */
     }
 
     fun parseNav(doc: Document) {
