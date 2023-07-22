@@ -2,12 +2,14 @@ package org.github.aanno.pgconv.impl
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import net.dankito.readability4j.Readability4J
+import net.dankito.readability4j.extended.Readability4JExtended
+import org.apache.logging.log4j.kotlin.Logging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.jsoup.select.Elements
-import org.apache.logging.log4j.kotlin.Logging
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
+import org.jsoup.select.Elements
 import java.io.File
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
@@ -21,6 +23,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private val pageChannel = Channel<String>(Channel.UNLIMITED)
     private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
+    private val readability = Channel<File>(Channel.UNLIMITED)
 
     fun parseOld() {
         val doc: Document = Jsoup.connect("https://en.wikipedia.org/").get()
@@ -42,6 +45,9 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             GlobalScope.launch {
                 pageChannel.send(root)
             }
+            GlobalScope.launch {
+                applyReadability()
+            }
             var current = System.currentTimeMillis()
             do {
                 if (pageChannel.isEmpty) {
@@ -51,6 +57,9 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
                     parsePage()
                 }
             } while (current - lastAction.get() <= 5000)
+            pageChannel.close()
+            // TODO
+            // readability.close()
         }
     }
 
@@ -91,8 +100,40 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
             // System.out.println()
             // System.out.println(doc.html())
-            File(page).bufferedWriter().use { it.write(doc.html()) }
+            val pageFile = File(page).canonicalFile
+            pageFile.bufferedWriter().use {
+                it.write(doc.html())
+                readability.send(pageFile)
+            }
         }
+    }
+
+    suspend fun applyReadability() {
+        do {
+            val file = readability.receive()
+            GlobalScope.launch {
+                applyReadability(file)
+            }
+        } while (!readability.isEmpty || !readability.isClosedForReceive)
+    }
+
+    fun applyReadability(file: File) {
+        /*
+        val readability = Readability4J(file.parentFile.toURI().toString(), file.toURI().toString())
+        // https://github.com/bejean/Readability4J
+        val article = readability.parse()
+        // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
+        val extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
+        // val extractedContentPlainText: String = article.getTextContent()
+        val title = article.title
+        val byline = article.byline
+        val excerpt = article.excerpt
+
+        logger.info("${file}: ${title}")
+        file.bufferedWriter().use {
+            it.write(extractedContentHtmlWithUtf8Encoding)
+        }
+         */
     }
 
     fun parseNav(doc: Document) {

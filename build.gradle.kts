@@ -9,6 +9,7 @@ val log4jVersion by properties
 val log4jApiKotlinVersion by properties
 val pgconvModuleName by properties
 val jdkVersion by properties
+val readability4jVersion by properties
 
 plugins {
     java
@@ -46,6 +47,7 @@ dependencies {
     implementation("com.google.code.findbugs:jsr305:${jsr305Version}")
 
     implementation("org.jsoup:jsoup:${jsoupVersion}")
+    implementation("net.dankito.readability4j:readability4j:${readability4jVersion}")
     // implementation("info.picocli:picocli:4.6.3")
     // implementation("com.google.guava:guava:31.1-jre")
 
