@@ -3,9 +3,11 @@ module org.github.aanno.pgconv {
     requires kotlin.reflect;
     requires org.jsoup;
     // requires jdk.unsupported;
-    // requires log4j.api.kotlin;
     requires org.apache.logging.log4j;
     requires kotlinx.coroutines.core;
+    // not jpms ready dependencies (all in UNNAMED module)
+    // requires log4j.api.kotlin;
+    // requires readability4j;
     // requires jsr305;
-    exports org.github.aanno.pgconv;
+    // exports org.github.aanno.pgconv;
 }

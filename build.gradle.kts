@@ -118,10 +118,10 @@ application {
     mainClass = "org.github.aanno.pgconv.MainKt"
     applicationDefaultJvmArgs = listOf(
         // reflective access
-        "--add-opens", "org.github.aanno.pgconv/org.github.aanno.pgconv=ALL-UNNAMED"
+        // "--add-opens", "org.github.aanno.pgconv/org.github.aanno.pgconv=ALL-UNNAMED"
         // reflective access
-        , "--add-opens", "org.github.aanno.pgconv/org.github.aanno.pgconv.impl=ALL-UNNAMED"
+        // "--add-opens", "org.github.aanno.pgconv/org.github.aanno.pgconv.impl=ALL-UNNAMED"
         // compile-time access
-        , "--add-reads", "org.github.aanno.pgconv=ALL-UNNAMED"
+        "--add-reads", "org.github.aanno.pgconv=ALL-UNNAMED"
     )
 }
