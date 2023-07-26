@@ -14,6 +14,7 @@ import org.jsoup.nodes.Node
 import org.jsoup.parser.Tag
 import org.jsoup.select.Elements
 import java.io.File
+import java.lang.IllegalArgumentException
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
@@ -147,6 +148,22 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         }
     }
 
+    fun addMetaToHtml(html: String): String {
+        val startMeta = html.indexOf("<meta ")
+        if (startMeta < 0) {
+            throw IllegalArgumentException("no meta tag in html?")
+        }
+        val result = StringBuffer("<html>\n  <head>\n")
+        metaTags.keySet().forEach {k ->
+            val v = metaTags.get(k)
+            if (v.size == 1) {
+                result.append("    <meta name=\"${k}\" content=\"${v.iterator().next()}\">\n")
+            }
+        }
+        result.append("\n    ").append(html.subSequence(startMeta, html.lastIndex))
+        return result.toString()
+    }
+
     suspend fun applyReadability() {
         do {
             val readabilityDocument = readability.receive()
@@ -174,10 +191,10 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             val excerpt = article.excerpt
             logger.info("${rd.file}: ${title}")
         } else {
-            extractedContentHtmlWithUtf8Encoding = rd.document.html()
+            extractedContentHtmlWithUtf8Encoding = rd.document.outerHtml()
         }
         rd.file.bufferedWriter().use {
-            it.write(extractedContentHtmlWithUtf8Encoding)
+            it.write(addMetaToHtml(extractedContentHtmlWithUtf8Encoding!!))
         }
     }
 
