@@ -1,16 +1,17 @@
 package org.github.aanno.pgconv.impl
 
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.Channel
 import net.dankito.readability4j.extended.Readability4JExtended
 import org.apache.logging.log4j.kotlin.Logging
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Attributes
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
+import org.jsoup.parser.Tag
 import org.jsoup.select.Elements
 import java.io.File
 import java.util.concurrent.ConcurrentSkipListSet
@@ -26,11 +27,14 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     companion object : Logging
 
     private var metaTags: Multimap<String, String> = HashMultimap.create()
+    private var root: String? = null
 
     private val lastAction = AtomicLong(System.currentTimeMillis())
+
     private val pageChannel = Channel<String>(Channel.UNLIMITED)
     private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
+
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
 
     fun parseOld() {
@@ -49,6 +53,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
     fun parsePageRec(root: String) {
+        this.root = root
         runBlocking<Unit>(Dispatchers.Default) {
             GlobalScope.launch {
                 pageChannel.send(root)
@@ -118,9 +123,9 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     suspend fun storeMeta(doc: Document) {
         doc.select("meta").forEach {
-            val name = it.attr("name")
-            val httpEquiv = it.attr("http-equiv")
-            val key = if (name.isNullOrBlank()) httpEquiv else name
+            val key = it.attr("name")
+            // val httpEquiv = it.attr("http-equiv")
+            // val key = if (name.isNullOrBlank()) httpEquiv else name
             val value = it.attr("content") ?: ""
             if (key != null) {
                 metaTags.put(key, value)
@@ -128,21 +133,39 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         }
     }
 
+    fun writeMeta(doc: Document) {
+        val head: Element = doc.selectFirst("head")!!
+        logger.info("write ${metaTags.keySet().size} meta tags")
+        metaTags.keySet().forEach { k ->
+            val v = metaTags.get(k)
+            if (v.size == 1) {
+                val attrs = Attributes()
+                attrs.add("name", k)
+                attrs.add("content", v.iterator().next())
+                head.appendChild(Element(Tag.valueOf("meta"), null, attrs))
+            }
+        }
+    }
+
     suspend fun applyReadability() {
         do {
-            val file = readability.receive()
+            val readabilityDocument = readability.receive()
             GlobalScope.launch {
-                applyReadability(file)
+                logger.info("process ${readabilityDocument.file}")
+                // writeMeta(readabilityDocument.document)
+                applyReadability(readabilityDocument)
             }
         } while (!readability.isEmpty || !readability.isClosedForReceive)
     }
 
-    private fun applyReadability(rd: ReadabilityDocument) {
+    private suspend fun applyReadability(rd: ReadabilityDocument) {
         var extractedContentHtmlWithUtf8Encoding: String? = null
         if (USE_READABILITY4J) {
             val readability = Readability4JExtended(rd.file.parentFile.toURI().toString(), rd.document)
             // https://github.com/bejean/Readability4J
             val article = readability.parse()
+            // rewrite meta tags into article
+            // writeMeta(article.articleContent)
             // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
             extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
             // val extractedContentPlainText: String = article.getTextContent()
