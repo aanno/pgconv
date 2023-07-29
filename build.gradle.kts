@@ -50,6 +50,7 @@ dependencies {
 
     implementation("org.jsoup:jsoup:${jsoupVersion}")
     implementation("net.dankito.readability4j:readability4j:${readability4jVersion}")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:${log4jVersion}")
     // implementation("info.picocli:picocli:4.6.3")
     implementation("com.google.guava:guava:${guavaVersion}")
 

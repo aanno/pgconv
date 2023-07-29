@@ -252,7 +252,8 @@ fun toNextElementSibling(el: Node, expected: String, remove: Boolean): Element? 
 
 fun parentFileUri(file: File): String {
     if (file.parentFile == null) {
-        return ""
+        // https://stackoverflow.com/questions/7857416/file-uri-scheme-and-relative-files
+        return "file://./"
     }
     return file.parentFile.toURI().toString()
 }
