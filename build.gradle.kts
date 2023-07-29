@@ -12,6 +12,7 @@ val pgconvModuleName by properties
 val jdkVersion by properties
 val readability4jVersion by properties
 val guavaVersion by properties
+val epub4jVersion by properties
 
 plugins {
     java
@@ -53,6 +54,8 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:${log4jVersion}")
     // implementation("info.picocli:picocli:4.6.3")
     implementation("com.google.guava:guava:${guavaVersion}")
+
+    implementation("io.documentnode:epub4j-core:${epub4jVersion}")
 
     implementation("org.apache.logging.log4j:log4j-api:${log4jVersion}")
     implementation("org.apache.logging.log4j:log4j-core:${log4jVersion}")

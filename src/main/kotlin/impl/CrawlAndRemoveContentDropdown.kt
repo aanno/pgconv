@@ -11,9 +11,12 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.select.Elements
 import java.io.File
+import java.lang.IllegalArgumentException
+import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
+import kotlin.collections.ArrayList
 
 private val USE_READABILITY4J = true
 
@@ -28,7 +31,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private val lastAction = AtomicLong(System.currentTimeMillis())
 
     private val pageChannel = Channel<String>(Channel.UNLIMITED)
-    private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
+    private val allPages: MutableList<String> = Collections.synchronizedList(ArrayList<String>())
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
 
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
@@ -69,6 +72,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             pageChannel.close()
             // TODO
             // readability.close()
+            logger.info("allPages: ${allPages}")
         }
     }
 
@@ -102,7 +106,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             }
             val normalPage = toc.isEmpty()
 
-            parseNav(doc)
+            parseNav(page, doc)
             val meta = MetaTags.of(doc)
 
             /*
@@ -154,7 +158,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         }
     }
 
-    fun parseNav(doc: Document) {
+    suspend fun parseNav(page: String, doc: Document) {
         // author or previous
         var prevNav: Element? = doc.selectFirst("a")
         if (prevNav != null) {
@@ -186,15 +190,28 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // var nextNav: Element? = doc.selectFirst("a")
             val nextNav: Element? = toNextElementSibling(prevNav, "a", true)
 
-            val prevKnown = allPages.contains(prevNav.attr("href"))
+            val prevHref = prevNav.attr("href")
+            val prevKnown = allPages.contains(prevHref)
+
+            var nextHref: String? = null
             val nextKnown = if (nextNav != null) {
-                allPages.contains(nextNav.attr("href"))
+                nextHref = nextNav.attr("href")
+                allPages.contains(nextHref)
             } else {
-                null
+                false
             }
 
             logger.debug("prevNav: ${prevNav} ${prevKnown}")
             logger.debug("nextNav: ${nextNav} ${nextKnown}")
+
+            if (!prevKnown) {
+                logger.info("schedule unknown previous ${prevHref}")
+                sendPreviousPage(prevHref, page)
+            }
+            if (!nextKnown) {
+                logger.info("schedule unknown next ${nextHref}")
+                sendNextPage(nextHref!!, page)
+            }
         }
     }
 
@@ -207,9 +224,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         elements
             .forEach {
                 if (!allPages.contains(it)) {
-                    allPages.add(it)
-                    logger.debug("new page found: ${it}")
-                    pageChannel.send(it)
+                    sendNextTocPage(it)
                 }
             }
         // decreased performance
@@ -223,14 +238,35 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             return anchor
         } else if (anchor.get(0) == '#') {
             val result = anchor.substring(1) + ".html"
-            /*
             if (!allPages.contains(result)) {
                 logger.error("${result} does not refer to known page")
             }
-             */
         }
         return anchor
     }
+
+    private suspend fun sendNextTocPage(newPage: String) {
+        allPages.add(newPage)
+        logger.debug("sendNextTocPage: ${newPage}")
+        pageChannel.send(newPage)
+    }
+
+    private suspend fun sendPreviousPage(newPage: String, refPage: String) {
+        val idx = allPages.indexOf(refPage)
+        if (idx < 0) throw IllegalArgumentException()
+        allPages.add(idx, newPage);
+        logger.debug("sendPreviousPage: ${newPage}")
+        pageChannel.send(newPage)
+    }
+
+    private suspend fun sendNextPage(newPage: String, refPage: String) {
+        val idx = allPages.indexOf(refPage)
+        if (idx < 0) throw IllegalArgumentException()
+        allPages.add(idx + 1, newPage);
+        logger.debug("sendPreviousPage: ${newPage}")
+        pageChannel.send(newPage)
+    }
+
 }
 
 @Nullable
