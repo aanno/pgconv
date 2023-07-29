@@ -1,33 +1,28 @@
 package org.github.aanno.pgconv.impl
 
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
+import impl.MetaTags
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import net.dankito.readability4j.extended.Readability4JExtended
 import org.apache.logging.log4j.kotlin.Logging
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Attributes
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
-import org.jsoup.parser.Tag
 import org.jsoup.select.Elements
 import java.io.File
-import java.lang.IllegalArgumentException
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
 private val USE_READABILITY4J = true
 
-private data class ReadabilityDocument(val file: File, val document: Document)
+private data class ReadabilityDocument(val file: File, val document: Document, val metaTags: MetaTags)
 
 class CrawlAndRemoveContentDropdown(private val base: String) {
 
     companion object : Logging
 
-    private var metaTags: Multimap<String, String> = HashMultimap.create()
     private var root: String? = null
 
     private val lastAction = AtomicLong(System.currentTimeMillis())
@@ -74,10 +69,6 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             pageChannel.close()
             // TODO
             // readability.close()
-            logger.info("Meta:");
-            metaTags.keySet().forEach {
-                logger.info("${it} -> ${metaTags[it]}")
-            }
         }
     }
 
@@ -112,56 +103,16 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             val normalPage = toc.isEmpty()
 
             parseNav(doc)
-            storeMeta(doc)
+            val meta = MetaTags.of(doc)
 
+            /*
             val headers: Elements = doc.select("h1, h2, h3, h4, h5")
             logger.debug(headers)
+             */
 
             val pageFile = File(page).canonicalFile
-            readability.send(ReadabilityDocument(pageFile, doc))
+            readability.send(ReadabilityDocument(pageFile, doc, meta))
         }
-    }
-
-    suspend fun storeMeta(doc: Document) {
-        doc.select("meta").forEach {
-            val key = it.attr("name")
-            // val httpEquiv = it.attr("http-equiv")
-            // val key = if (name.isNullOrBlank()) httpEquiv else name
-            val value = it.attr("content") ?: ""
-            if (key != null) {
-                metaTags.put(key, value)
-            }
-        }
-    }
-
-    fun writeMeta(doc: Document) {
-        val head: Element = doc.selectFirst("head")!!
-        logger.info("write ${metaTags.keySet().size} meta tags")
-        metaTags.keySet().forEach { k ->
-            val v = metaTags.get(k)
-            if (v.size == 1) {
-                val attrs = Attributes()
-                attrs.add("name", k)
-                attrs.add("content", v.iterator().next())
-                head.appendChild(Element(Tag.valueOf("meta"), null, attrs))
-            }
-        }
-    }
-
-    fun addMetaToHtml(html: String): String {
-        val startMeta = html.indexOf("<meta ")
-        if (startMeta < 0) {
-            throw IllegalArgumentException("no meta tag in html?")
-        }
-        val result = StringBuffer("<html>\n  <head>\n")
-        metaTags.keySet().forEach {k ->
-            val v = metaTags.get(k)
-            if (v.size == 1) {
-                result.append("    <meta name=\"${k}\" content=\"${v.iterator().next()}\">\n")
-            }
-        }
-        result.append("\n    ").append(html.subSequence(startMeta, html.lastIndex))
-        return result.toString()
     }
 
     suspend fun applyReadability() {
@@ -187,14 +138,16 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
             // val extractedContentPlainText: String = article.getTextContent()
             val title = article.title
-            val byline = article.byline
-            val excerpt = article.excerpt
+            // both not implemented
+            // val byline = article.byline
+            // val excerpt = article.excerpt
             logger.info("${rd.file}: ${title}")
         } else {
             extractedContentHtmlWithUtf8Encoding = rd.document.outerHtml()
         }
         rd.file.bufferedWriter().use {
-            it.write(addMetaToHtml(extractedContentHtmlWithUtf8Encoding!!))
+            it.write(rd.metaTags.addMetaToHtml(extractedContentHtmlWithUtf8Encoding!!))
+            // it.write(extractedContentHtmlWithUtf8Encoding!!)
         }
     }
 
