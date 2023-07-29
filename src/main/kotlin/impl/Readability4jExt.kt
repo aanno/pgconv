@@ -1,5 +1,6 @@
 package org.github.aanno.pgconv.impl
 
+import impl.MetaTags
 import net.dankito.readability4j.Article
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -18,5 +19,11 @@ fun Article.getContentWithEncodingAsElement(encoding: String): Document {
     metaCharset.attr("charset", encoding)
     val body = html.appendElement("body")
     body.appendChild(articleContent)
+    return document
+}
+
+fun Article.getContentWithEncodingAsElement(encoding: String, metaTags: MetaTags): Document {
+    val document = getContentWithEncodingAsElement(encoding)
+    metaTags.writeMeta(document)
     return document
 }

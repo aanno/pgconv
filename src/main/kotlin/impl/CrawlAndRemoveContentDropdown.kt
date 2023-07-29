@@ -137,7 +137,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // writeMeta(article.articleContent)
             // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
             // extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
-            extractedContentHtmlWithUtf8Encoding = article.getContentWithEncodingAsElement("utf-8")
+            extractedContentHtmlWithUtf8Encoding = article.getContentWithEncodingAsElement(
+                "utf-8")
             // val extractedContentPlainText: String = article.getTextContent()
             val title = article.title
             // both not implemented
