@@ -11,12 +11,9 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.select.Elements
 import java.io.File
-import java.lang.IllegalArgumentException
-import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
-import kotlin.collections.ArrayList
 
 private val USE_READABILITY4J = true
 
@@ -31,7 +28,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private val lastAction = AtomicLong(System.currentTimeMillis())
 
     private val pageChannel = Channel<String>(Channel.UNLIMITED)
-    private val allPages: MutableList<String> = Collections.synchronizedList(ArrayList<String>())
+    private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
 
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
@@ -142,7 +139,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
             // extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
             extractedContentHtmlWithUtf8Encoding = article.getContentWithEncodingAsElement(
-                "utf-8", rd.metaTags)
+                "utf-8", rd.metaTags
+            )
             // val extractedContentPlainText: String = article.getTextContent()
             val title = article.title
             // both not implemented
@@ -208,7 +206,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
                 logger.info("schedule unknown previous ${prevHref}")
                 sendPreviousPage(prevHref, page)
             }
-            if (!nextKnown) {
+            if (!nextKnown && nextHref != null) {
                 logger.info("schedule unknown next ${nextHref}")
                 sendNextPage(nextHref!!, page)
             }
@@ -232,7 +230,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
 
-    fun anchor2Page(anchor: String): String {
+    suspend fun anchor2Page(anchor: String): String {
         val size = anchor.length;
         if (size <= 1) {
             return anchor
@@ -240,6 +238,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             val result = anchor.substring(1) + ".html"
             if (!allPages.contains(result)) {
                 logger.error("${result} does not refer to known page")
+                // ???
+                sendNextTocPage(result)
             }
         }
         return anchor
@@ -254,7 +254,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private suspend fun sendPreviousPage(newPage: String, refPage: String) {
         val idx = allPages.indexOf(refPage)
         if (idx < 0) throw IllegalArgumentException()
-        allPages.add(idx, newPage);
+        // allPages.add(idx, newPage);
+        allPages.add(newPage)
         logger.debug("sendPreviousPage: ${newPage}")
         pageChannel.send(newPage)
     }
@@ -262,7 +263,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private suspend fun sendNextPage(newPage: String, refPage: String) {
         val idx = allPages.indexOf(refPage)
         if (idx < 0) throw IllegalArgumentException()
-        allPages.add(idx + 1, newPage);
+        // allPages.add(idx + 1, newPage);
+        allPages.add(newPage)
         logger.debug("sendPreviousPage: ${newPage}")
         pageChannel.send(newPage)
     }
