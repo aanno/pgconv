@@ -11,20 +11,9 @@ private data class PrevNext(val prev: String, val next: String)
 class SequenceFactory {
 
     private val queue: Queue<PrevNext> = ConcurrentLinkedQueue<PrevNext>()
-    private var last: String? = null
-
-    fun add(el: String) {
-        if (last == null) {
-            last = el
-        } else {
-            add(last!!, el)
-            last = el
-        }
-    }
 
     fun add(prev: String, next: String) {
         queue.add(PrevNext(prev, next))
-        last = next
     }
 
     fun build(): List<String> {

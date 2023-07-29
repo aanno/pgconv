@@ -102,7 +102,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // title page processing
             val toc: Elements = doc.select(".toc")
             toc.select("a").forEach { e ->
-                e.attr("href", anchor2Page(e.attr("href")))
+                e.attr("href", anchor2Page(e.attr("href"), page))
             }
             val normalPage = toc.isEmpty()
 
@@ -222,10 +222,10 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         val elements = dropdownContent
             .select("a")
             .map { it.attr("href") }
-        elements
+        elements.zipWithNext()
             .forEach {
-                if (!allPages.contains(it)) {
-                    sendNextTocPage(it)
+                if (!allPages.contains(it.first)) {
+                    sendNextTocPage(it.first, it.second)
                 }
             }
         // decreased performance
@@ -233,26 +233,29 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
 
-    suspend fun anchor2Page(anchor: String): String {
+    suspend fun anchor2Page(anchor: String, refPage: String): String {
         val size = anchor.length;
         if (size <= 1) {
             return anchor
         } else if (anchor.get(0) == '#') {
             val result = anchor.substring(1) + ".html"
+            /*
             if (!allPages.contains(result)) {
                 logger.error("${result} does not refer to known page")
                 // ???
-                sendNextTocPage(result)
+                sendNextTocPage(result, refPage)
             }
+             */
         }
         return anchor
     }
 
-    private suspend fun sendNextTocPage(newPage: String) {
-        allPages.add(newPage)
-        pageSequenceFactory.add(newPage)
-        logger.debug("sendNextTocPage: ${newPage}")
-        pageChannel.send(newPage)
+    private suspend fun sendNextTocPage(newPage1: String, newPage2: String) {
+        allPages.add(newPage1)
+        // allPages.add(newPage2)
+        pageSequenceFactory.add(newPage1, newPage2)
+        logger.debug("sendNextTocPage: ${newPage1} ${newPage2}")
+        pageChannel.send(newPage1)
     }
 
     private suspend fun sendPreviousPage(newPage: String, refPage: String) {
