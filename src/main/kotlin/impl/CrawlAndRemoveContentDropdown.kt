@@ -110,7 +110,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             logger.debug(headers)
              */
 
-            val pageFile = File(page).canonicalFile
+            val pageFile = File(page) // .canonicalFile
             readability.send(ReadabilityDocument(pageFile, doc, meta))
         }
     }
@@ -129,7 +129,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private suspend fun applyReadability(rd: ReadabilityDocument) {
         var extractedContentHtmlWithUtf8Encoding: Document? = null
         if (USE_READABILITY4J) {
-            val readability = Readability4JExtended(rd.file.parentFile.toURI().toString(), rd.document)
+            val readability = Readability4JExtended(parentFileUri(rd.file), rd.document)
             // https://github.com/bejean/Readability4J
             val article = readability.parse()
 
@@ -138,7 +138,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
             // extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
             extractedContentHtmlWithUtf8Encoding = article.getContentWithEncodingAsElement(
-                "utf-8")
+                "utf-8", rd.metaTags)
             // val extractedContentPlainText: String = article.getTextContent()
             val title = article.title
             // both not implemented
@@ -248,4 +248,11 @@ fun toNextElementSibling(el: Node, expected: String, remove: Boolean): Element? 
         return null
     }
     return result as Element?
+}
+
+fun parentFileUri(file: File): String {
+    if (file.parentFile == null) {
+        return ""
+    }
+    return file.parentFile.toURI().toString()
 }

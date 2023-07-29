@@ -2,9 +2,7 @@ package org.github.aanno.pgconv.impl
 
 import impl.MetaTags
 import net.dankito.readability4j.Article
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 
 fun Article.getContentWithEncodingAsElement(encoding: String): Document {
     /*
