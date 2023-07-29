@@ -127,15 +127,17 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
     private suspend fun applyReadability(rd: ReadabilityDocument) {
-        var extractedContentHtmlWithUtf8Encoding: String? = null
+        var extractedContentHtmlWithUtf8Encoding: Document? = null
         if (USE_READABILITY4J) {
             val readability = Readability4JExtended(rd.file.parentFile.toURI().toString(), rd.document)
             // https://github.com/bejean/Readability4J
             val article = readability.parse()
+
             // rewrite meta tags into article
             // writeMeta(article.articleContent)
             // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
-            extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
+            // extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
+            extractedContentHtmlWithUtf8Encoding = article.getContentWithEncodingAsElement("utf-8")
             // val extractedContentPlainText: String = article.getTextContent()
             val title = article.title
             // both not implemented
@@ -143,11 +145,11 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // val excerpt = article.excerpt
             logger.info("${rd.file}: ${title}")
         } else {
-            extractedContentHtmlWithUtf8Encoding = rd.document.outerHtml()
+            extractedContentHtmlWithUtf8Encoding = rd.document
         }
         rd.file.bufferedWriter().use {
-            it.write(rd.metaTags.addMetaToHtml(extractedContentHtmlWithUtf8Encoding!!))
-            // it.write(extractedContentHtmlWithUtf8Encoding!!)
+            // it.write(rd.metaTags.addMetaToHtml(extractedContentHtmlWithUtf8Encoding!!))
+            it.write(extractedContentHtmlWithUtf8Encoding?.outerHtml())
         }
     }
 

@@ -2,9 +2,7 @@ package impl;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.apache.logging.log4j.kotlin.Logging
 import org.apache.logging.log4j.kotlin.logger
-import org.github.aanno.pgconv.impl.CrawlAndRemoveContentDropdown
 import org.jsoup.nodes.Attributes
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element
@@ -38,16 +36,18 @@ class MetaTags() {
         }
     }
 
-    fun writeMeta(doc: Document) {
-        val head: Element = doc.selectFirst("head")!!
-        logger.info("write ${metaTags.keySet().size} meta tags")
-        metaTags.keySet().forEach { k ->
-            val v = metaTags.get(k)
-            if (v.size == 1) {
-                val attrs = Attributes()
-                attrs.add("name", k)
-                attrs.add("content", v.iterator().next())
-                head.appendChild(Element(Tag.valueOf("meta"), null, attrs))
+    fun writeMeta(element: Element?) {
+        if (element != null) {
+            val head: Element = element.selectFirst("head")!!
+            logger.info("write ${metaTags.keySet().size} meta tags")
+            metaTags.keySet().forEach { k ->
+                val v = metaTags.get(k)
+                if (v.size == 1) {
+                    val attrs = Attributes()
+                    attrs.add("name", k)
+                    attrs.add("content", v.iterator().next())
+                    head.appendChild(Element(Tag.valueOf("meta"), null, attrs))
+                }
             }
         }
     }
