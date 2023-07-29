@@ -29,6 +29,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     private val pageChannel = Channel<String>(Channel.UNLIMITED)
     private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
+    private val pageSequenceFactory = SequenceFactory()
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
 
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
@@ -53,6 +54,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         runBlocking<Unit>(Dispatchers.Default) {
             GlobalScope.launch {
                 pageChannel.send(root)
+                // sendNextTocPage(root)
             }
             GlobalScope.launch {
                 applyReadability()
@@ -70,6 +72,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // TODO
             // readability.close()
             logger.info("allPages: ${allPages}")
+            logger.info("sequence: ${pageSequenceFactory.build()}")
         }
     }
 
@@ -247,6 +250,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     private suspend fun sendNextTocPage(newPage: String) {
         allPages.add(newPage)
+        pageSequenceFactory.add(newPage)
         logger.debug("sendNextTocPage: ${newPage}")
         pageChannel.send(newPage)
     }
@@ -254,8 +258,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private suspend fun sendPreviousPage(newPage: String, refPage: String) {
         val idx = allPages.indexOf(refPage)
         if (idx < 0) throw IllegalArgumentException()
-        // allPages.add(idx, newPage);
         allPages.add(newPage)
+        pageSequenceFactory.add(newPage, refPage)
         logger.debug("sendPreviousPage: ${newPage}")
         pageChannel.send(newPage)
     }
@@ -263,8 +267,8 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private suspend fun sendNextPage(newPage: String, refPage: String) {
         val idx = allPages.indexOf(refPage)
         if (idx < 0) throw IllegalArgumentException()
-        // allPages.add(idx + 1, newPage);
         allPages.add(newPage)
+        pageSequenceFactory.add(refPage, newPage)
         logger.debug("sendPreviousPage: ${newPage}")
         pageChannel.send(newPage)
     }
