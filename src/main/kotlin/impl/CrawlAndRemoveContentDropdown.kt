@@ -11,6 +11,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.select.Elements
 import java.io.File
+import java.lang.IllegalStateException
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
@@ -238,7 +239,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         if (size <= 1) {
             return anchor
         } else if (anchor.get(0) == '#') {
-            val result = anchor.substring(1) + ".html"
+            return anchor.substring(1) + ".html"
             /*
             if (!allPages.contains(result)) {
                 logger.error("${result} does not refer to known page")
@@ -247,7 +248,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             }
              */
         }
-        return anchor
+        throw IllegalStateException()
     }
 
     private suspend fun sendNextTocPage(newPage1: String, newPage2: String) {
