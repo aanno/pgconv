@@ -20,7 +20,7 @@ import javax.annotation.Nullable
 private val USE_READABILITY4J = true
 private val WRITE_HTML_FILES = true
 
-private data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
+internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
 
 class CrawlAndRemoveContentDropdown(private val base: String) {
 
@@ -34,7 +34,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
     private val pageSequenceFactory = SequenceFactory()
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
-    private val path2Document: MutableMap<String, Document> = ConcurrentSkipListMap<String, Document>()
+    private val path2Document: MutableMap<String, ReadabilityDocument> = ConcurrentSkipListMap<String, ReadabilityDocument>()
 
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
 
@@ -135,7 +135,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     }
 
     private suspend fun applyReadability(rd: ReadabilityDocument) {
-        var extractedContentHtmlWithUtf8Encoding: Document? = null
+        var doc: ReadabilityDocument = rd
         if (USE_READABILITY4J) {
             val readability = Readability4JExtended(parentFileUri(rd.hrefPath), rd.document)
             // https://github.com/bejean/Readability4J
@@ -145,24 +145,22 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // writeMeta(article.articleContent)
             // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
             // extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
-            extractedContentHtmlWithUtf8Encoding = article.getContentWithEncodingAsElement(
+            doc = ReadabilityDocument(doc.hrefPath, article.getContentWithEncodingAsElement(
                 "utf-8", rd.metaTags
-            )
+            ), doc.metaTags)
             // val extractedContentPlainText: String = article.getTextContent()
             val title = article.title
             // both not implemented
             // val byline = article.byline
             // val excerpt = article.excerpt
             logger.info("${rd.hrefPath}: ${title}")
-        } else {
-            extractedContentHtmlWithUtf8Encoding = rd.document
         }
         if (WRITE_HTML_FILES) {
             File(rd.hrefPath).bufferedWriter().use {
-                it.write(extractedContentHtmlWithUtf8Encoding?.outerHtml())
+                it.write(doc.document.outerHtml())
             }
         }
-        path2Document.put(rd.hrefPath, extractedContentHtmlWithUtf8Encoding!!)
+        path2Document.put(rd.hrefPath, doc)
     }
 
     suspend fun parseNav(page: String, doc: Document) {

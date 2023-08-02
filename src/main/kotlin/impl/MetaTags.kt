@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Tag
 import java.lang.IllegalArgumentException
+import java.lang.IllegalStateException
 import kotlin.text.StringBuilder
 
 class MetaTags() {
@@ -24,6 +25,18 @@ class MetaTags() {
 
     private val metaTags: Multimap<String, String> = HashMultimap.create()
 
+    operator fun get(k: String): String? {
+        val col = metaTags[k]
+        val size = col.size
+        if (size == 0) {
+            return null
+        }
+        if (size > 1) {
+            throw IllegalStateException()
+        }
+        return col.iterator().next()
+    }
+
     fun storeMeta(doc: Document) {
         doc.select("meta").forEach {
             val key = it.attr("name")
@@ -36,7 +49,6 @@ class MetaTags() {
         }
     }
 
-    @Deprecated("use addMetaToHtml(..)")
     fun writeMeta(element: Element?) {
         if (element != null) {
             val head: Element = element.selectFirst("head")!!
@@ -53,6 +65,7 @@ class MetaTags() {
         }
     }
 
+    @Deprecated("use writeMeta(..)")
     fun addMetaToHtml(html: String): String {
         val startMeta = html.indexOf("<meta ")
         if (startMeta < 0) {
