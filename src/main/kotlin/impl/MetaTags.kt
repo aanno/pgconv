@@ -36,6 +36,7 @@ class MetaTags() {
         }
     }
 
+    @Deprecated("use addMetaToHtml(..)")
     fun writeMeta(element: Element?) {
         if (element != null) {
             val head: Element = element.selectFirst("head")!!

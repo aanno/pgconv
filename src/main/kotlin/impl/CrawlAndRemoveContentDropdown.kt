@@ -12,13 +12,15 @@ import org.jsoup.nodes.Node
 import org.jsoup.select.Elements
 import java.io.File
 import java.lang.IllegalStateException
+import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
 private val USE_READABILITY4J = true
+private val WRITE_HTML_FILES = true
 
-private data class ReadabilityDocument(val file: File, val document: Document, val metaTags: MetaTags)
+private data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
 
 class CrawlAndRemoveContentDropdown(private val base: String) {
 
@@ -32,6 +34,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
     private val pageSequenceFactory = SequenceFactory()
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
+    private val path2Document: MutableMap<String, Document> = ConcurrentSkipListMap<String, Document>()
 
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
 
@@ -74,6 +77,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // readability.close()
             logger.info("allPages: ${allPages}")
             logger.info("sequence: ${pageSequenceFactory.build()}")
+            // logger.info("path2Document: ${path2Document}")
         }
     }
 
@@ -115,8 +119,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             logger.debug(headers)
              */
 
-            val pageFile = File(page) // .canonicalFile
-            readability.send(ReadabilityDocument(pageFile, doc, meta))
+            readability.send(ReadabilityDocument(page, doc, meta))
         }
     }
 
@@ -124,7 +127,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
         do {
             val readabilityDocument = readability.receive()
             GlobalScope.launch {
-                logger.info("process ${readabilityDocument.file}")
+                logger.info("process ${readabilityDocument.hrefPath}")
                 // writeMeta(readabilityDocument.document)
                 applyReadability(readabilityDocument)
             }
@@ -134,7 +137,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
     private suspend fun applyReadability(rd: ReadabilityDocument) {
         var extractedContentHtmlWithUtf8Encoding: Document? = null
         if (USE_READABILITY4J) {
-            val readability = Readability4JExtended(parentFileUri(rd.file), rd.document)
+            val readability = Readability4JExtended(parentFileUri(rd.hrefPath), rd.document)
             // https://github.com/bejean/Readability4J
             val article = readability.parse()
 
@@ -150,14 +153,16 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // both not implemented
             // val byline = article.byline
             // val excerpt = article.excerpt
-            logger.info("${rd.file}: ${title}")
+            logger.info("${rd.hrefPath}: ${title}")
         } else {
             extractedContentHtmlWithUtf8Encoding = rd.document
         }
-        rd.file.bufferedWriter().use {
-            // it.write(rd.metaTags.addMetaToHtml(extractedContentHtmlWithUtf8Encoding!!))
-            it.write(extractedContentHtmlWithUtf8Encoding?.outerHtml())
+        if (WRITE_HTML_FILES) {
+            File(rd.hrefPath).bufferedWriter().use {
+                it.write(extractedContentHtmlWithUtf8Encoding?.outerHtml())
+            }
         }
+        path2Document.put(rd.hrefPath, extractedContentHtmlWithUtf8Encoding!!)
     }
 
     suspend fun parseNav(page: String, doc: Document) {
@@ -296,10 +301,12 @@ fun toNextElementSibling(el: Node, expected: String, remove: Boolean): Element? 
     return result as Element?
 }
 
-fun parentFileUri(file: File): String {
-    if (file.parentFile == null) {
+fun parentFileUri(hrefPath: String): String {
+    val idx = hrefPath.lastIndexOf('/')
+    val parent = if (idx >= 0) hrefPath.substring(0, idx) else null
+    if (parent == null) {
         // https://stackoverflow.com/questions/7857416/file-uri-scheme-and-relative-files
         return "file://./"
     }
-    return file.parentFile.toURI().toString()
+    return parent
 }
