@@ -2,6 +2,7 @@
   <configuration default="false" name="MainKt" type="JetRunConfigurationType" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="org.github.aanno.pgconv.MainKt" />
     <module name="pgconv.main" />
+    <option name="PROGRAM_PARAMETERS" value="https://www.projekt-gutenberg.org/jeanpaul/badereis/badereis.html" />
     <shortenClasspath name="ARGS_FILE" />
     <option name="VM_PARAMETERS" value="--add-opens org.github.aanno.pgconv/org.github.aanno.pgconv=ALL-UNNAMED --add-opens org.github.aanno.pgconv/org.github.aanno.pgconv.impl=ALL-UNNAMED --add-reads org.github.aanno.pgconv=ALL-UNNAMED" />
     <method v="2">

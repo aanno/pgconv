@@ -3,12 +3,15 @@ package org.github.aanno.pgconv.impl
 import impl.MetaTags
 import io.documentnode.epub4j.domain.*
 import io.documentnode.epub4j.epub.EpubWriter
+import org.apache.logging.log4j.kotlin.Logging
 import java.io.BufferedOutputStream
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
 
 class GenerateEpub internal constructor(private val path2Document: MutableMap<String, ReadabilityDocument>) {
+
+    companion object : Logging
 
     val provider: LazyResourceProvider = EpubLazyResourceProvider(path2Document)
     val book = Book()
@@ -31,6 +34,7 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
     }
 
     fun addSection(title: String, href: String, ref: TOCReference? = null): TOCReference {
+        logger.info("processing section ${title} (${href})")
         if (ref == null) {
             return book.addSection(title, getResource(href))
         } else {
@@ -64,6 +68,7 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
         BufferedOutputStream(file.outputStream()).use {
             writer.write(book, it)
         }
+        logger.info("epub written to ${file}")
     }
 
     fun getResource(href: String): Resource {
