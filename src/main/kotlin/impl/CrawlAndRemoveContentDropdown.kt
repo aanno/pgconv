@@ -78,6 +78,9 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             logger.info("allPages: ${allPages}")
             logger.info("sequence: ${pageSequenceFactory.build()}")
             // logger.info("path2Document: ${path2Document}")
+            val generator = GenerateEpub(path2Document)
+            generator.add(pageSequenceFactory.build())
+            generator.writeTo(File("test.epub"))
         }
     }
 
