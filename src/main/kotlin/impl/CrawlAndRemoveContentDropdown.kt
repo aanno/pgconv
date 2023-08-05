@@ -17,12 +17,12 @@ import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
-private val USE_READABILITY4J = true
-private val WRITE_HTML_FILES = true
-
 internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
 
-class CrawlAndRemoveContentDropdown(private val base: String) {
+class CrawlAndRemoveContentDropdown(
+    private val base: String,
+    private val noReadablility4j: Boolean = false,
+    private val writeInterimFiles: Boolean = false) {
 
     companion object : Logging
 
@@ -139,7 +139,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
 
     private suspend fun applyReadability(rd: ReadabilityDocument) {
         var doc: ReadabilityDocument = rd
-        if (USE_READABILITY4J) {
+        if (!noReadablility4j) {
             val readability = Readability4JExtended(parentFileUri(rd.hrefPath), rd.document)
             // https://github.com/bejean/Readability4J
             val article = readability.parse()
@@ -158,7 +158,7 @@ class CrawlAndRemoveContentDropdown(private val base: String) {
             // val excerpt = article.excerpt
             logger.info("${rd.hrefPath}: ${title}")
         }
-        if (WRITE_HTML_FILES) {
+        if (writeInterimFiles) {
             File(rd.hrefPath).bufferedWriter().use {
                 it.write(doc.document.outerHtml())
             }

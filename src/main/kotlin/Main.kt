@@ -3,15 +3,24 @@ package org.github.aanno.pgconv
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.help
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.types.boolean
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.github.aanno.pgconv.impl.CrawlAndRemoveContentDropdown
 
-private class Command: CliktCommand() {
+private class Command : CliktCommand() {
 
     val url by argument()
         .help("URL to book main page on https://www.projekt-gutenberg.org/")
+
+    val noReadablility4j by option(
+        help = "don't process html with Readability4J"
+    ).boolean().default(false)
+
+    val writeInterimFiles by option(
+        help = "write interim result (html pages) to disk"
+    ).boolean().default(false)
 
     @ExperimentalCoroutinesApi
     override

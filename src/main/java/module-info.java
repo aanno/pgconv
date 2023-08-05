@@ -10,5 +10,6 @@ module org.github.aanno.pgconv {
     // requires log4j.api.kotlin;
     // requires readability4j;
     // requires jsr305;
+    // requires clikt.jvm;
     // exports org.github.aanno.pgconv;
 }
