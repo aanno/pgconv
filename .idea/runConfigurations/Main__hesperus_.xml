@@ -2,7 +2,7 @@
   <configuration default="false" name="Main [hesperus]" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="org.github.aanno.pgconv.Main" />
     <module name="pgconv.main" />
-    <option name="PROGRAM_PARAMETERS" value="https://www.projekt-gutenberg.org/jeanpaul/hesperus/hespv11.html" />
+    <option name="PROGRAM_PARAMETERS" value="https://www.projekt-gutenberg.org/jeanpaul/hesperus/hesperus.html" />
     <option name="VM_PARAMETERS" value="--add-opens org.github.aanno.pgconv/org.github.aanno.pgconv=ALL-UNNAMED --add-opens org.github.aanno.pgconv/org.github.aanno.pgconv.impl=ALL-UNNAMED --add-reads org.github.aanno.pgconv=ALL-UNNAMED --add-reads kotlin.stdlib=kotlinx.coroutines.core --add-opens kotlin.stdlib/kotlin.coroutines.jvm.internal=kotlinx.coroutines.core" />
     <method v="2">
       <option name="Make" enabled="true" />

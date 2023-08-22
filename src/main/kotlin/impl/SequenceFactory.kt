@@ -13,7 +13,9 @@ class SequenceFactory {
     private val queue: Queue<PrevNext> = ConcurrentLinkedQueue<PrevNext>()
 
     fun add(prev: String, next: String) {
-        queue.add(PrevNext(prev, next))
+        if (prev != null && prev.trim().length > 0 && next != null && next.trim().length > 0) {
+            queue.add(PrevNext(prev, next))
+        }
     }
 
     fun build(): List<String> {
@@ -28,7 +30,8 @@ class SequenceFactory {
             if (nextIdx < 0) {
                 result.add(prevIdx + 1, it.next)
             } else {
-                if (prevIdx + 1 != nextIdx) throw IllegalStateException()
+                if (prevIdx + 1 != nextIdx) throw IllegalStateException(
+                    "prev: ${it.prev} (${prevIdx}) next: ${it.next} (${nextIdx}) queue: ${queue}")
             }
         }
         return result
