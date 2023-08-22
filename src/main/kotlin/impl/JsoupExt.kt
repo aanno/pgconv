@@ -62,6 +62,8 @@ fun Document.outHtmlWithPreamble(): String {
     htmlNode.attr("xmlns", "http://www.w3.org/1999/xhtml")
     htmlNode.attr("xmlns:ops", "http://www.idpf.org/2007/ops")
     val result = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+    result.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n")
+    result.append("    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n")
     result.append(html())
     return result.toString()
 }
