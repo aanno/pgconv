@@ -2,6 +2,7 @@ package org.github.aanno.pgconv.impl
 
 import org.jsoup.Connection
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.lang.BootstrapMethodError
 import java.lang.IllegalStateException
 import java.net.URL
@@ -53,4 +54,14 @@ fun connectWithProxyEnv(url: String): Connection {
         }
     }
     throw IllegalStateException(url)
+}
+
+fun Document.outHtmlWithPreamble(): String {
+    // TODO: xml:lang="de"
+    val htmlNode = childNodes().get(0)
+    htmlNode.attr("xmlns", "http://www.w3.org/1999/xhtml")
+    htmlNode.attr("xmlns:ops", "http://www.idpf.org/2007/ops")
+    val result = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+    result.append(html())
+    return result.toString()
 }

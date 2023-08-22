@@ -163,7 +163,7 @@ class CrawlAndRemoveContentDropdown(
         }
         if (writeInterimFiles) {
             File(rd.hrefPath).bufferedWriter().use {
-                it.write(doc.document.outerHtml())
+                it.write(doc.document.outHtmlWithPreamble())
             }
         }
         path2Document.put(rd.hrefPath, doc)

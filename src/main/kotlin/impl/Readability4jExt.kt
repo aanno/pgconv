@@ -4,6 +4,7 @@ import impl.MetaTags
 import net.dankito.readability4j.Article
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.Entities
 
 fun Article.getContentWithEncodingAsElement(encoding: String): Document {
     /*
@@ -12,6 +13,10 @@ fun Article.getContentWithEncodingAsElement(encoding: String): Document {
 
      */
     val document = Document("")
+    document.outputSettings()
+        .escapeMode(Entities.EscapeMode.xhtml)
+        .syntax(Document.OutputSettings.Syntax.xml)
+        .charset("utf-8")
     val html = document.appendElement("html")
     val head = html.appendElement("head")
     val metaCharset = head.appendElement("meta")
