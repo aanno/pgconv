@@ -20,6 +20,8 @@ import javax.annotation.Nullable
 
 internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
 
+private val WAIT_MS = 5000;
+
 class CrawlAndRemoveContentDropdown(
     private val base: String,
     private val noReadablility4j: Boolean = false,
@@ -72,15 +74,16 @@ class CrawlAndRemoveContentDropdown(
                 } else {
                     parsePage()
                 }
-            } while (current - lastAction.get() <= 5000)
+            } while (current - lastAction.get() <= WAIT_MS)
             pageChannel.close()
             // TODO
             // readability.close()
-            logger.info("allPages: ${allPages}")
-            logger.info("sequence: ${pageSequenceFactory.build()}")
+            logger.info("allPages: ${allPages.size} ${allPages}")
+            val sequence = pageSequenceFactory.build()
+            logger.info("sequence: ${sequence.size} ${sequence}")
             // logger.info("path2Document: ${path2Document}")
             val generator = GenerateEpub(path2Document)
-            generator.add(pageSequenceFactory.build())
+            generator.add(sequence)
             val idx = root.indexOf('.')
             val outfile = root.substring(0, idx) + ".epub"
             generator.writeTo(File(outfile))
@@ -90,7 +93,7 @@ class CrawlAndRemoveContentDropdown(
 
     suspend fun parsePage() {
         val page = pageChannel.receive()
-        if (page != "" && visitedPages.add(page)) GlobalScope.launch {
+        if (visitedPages.add(page)) GlobalScope.launch {
             lastAction.set(System.currentTimeMillis())
             val doc: Document = connectWithProxyEnv(base + "/" + page).get()
             logger.info("Processing ${page}")
