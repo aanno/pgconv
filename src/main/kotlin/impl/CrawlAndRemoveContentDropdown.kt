@@ -20,7 +20,7 @@ import javax.annotation.Nullable
 
 internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
 
-private val WAIT_MS = 5000;
+private val WAIT_MS = 2000;
 
 class CrawlAndRemoveContentDropdown(
     private val base: String,
@@ -288,19 +288,20 @@ class CrawlAndRemoveContentDropdown(
         val idx = allPages.indexOf(refPage)
         if (idx < 0)
             throw IllegalArgumentException()
-        allPages.add(newPage)
-        pageSequenceFactory.add(newPage, refPage)
-        logger.debug("sendPreviousPage: ${newPage}")
-        pageChannel.send(newPage)
+        if (sendPage(newPage)) {
+            pageSequenceFactory.add(newPage, refPage)
+            logger.debug("sendPreviousPage: ${newPage}")
+        }
     }
 
     private suspend fun sendNextPage(newPage: String, refPage: String) {
         val idx = allPages.indexOf(refPage)
-        if (idx < 0) throw IllegalArgumentException()
-        allPages.add(newPage)
-        pageSequenceFactory.add(refPage, newPage)
-        logger.debug("sendPreviousPage: ${newPage}")
-        pageChannel.send(newPage)
+        if (idx < 0)
+            throw IllegalArgumentException()
+        if (sendPage(newPage)) {
+            pageSequenceFactory.add(refPage, newPage)
+            logger.debug("sendPreviousPage: ${newPage}")
+        }
     }
 
 }
