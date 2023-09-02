@@ -270,11 +270,18 @@ class CrawlAndRemoveContentDropdown(
     }
 
     private suspend fun sendNextTocPage(newPage1: String, newPage2: String) {
-        allPages.add(newPage1)
-        // allPages.add(newPage2)
-        pageSequenceFactory.add(newPage1, newPage2)
-        logger.debug("sendNextTocPage: ${newPage1} ${newPage2}")
-        pageChannel.send(newPage1)
+        if (sendPage(newPage1)) {
+            pageSequenceFactory.add(newPage1, newPage2)
+            sendPage(newPage2)
+        }
+    }
+
+    private suspend fun sendPage(newPage: String): Boolean {
+        val result = allPages.add(newPage)
+        if (result) {
+            pageChannel.send(newPage)
+        }
+        return result
     }
 
     private suspend fun sendPreviousPage(newPage: String, refPage: String) {
