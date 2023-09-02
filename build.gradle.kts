@@ -13,6 +13,7 @@ val jdkVersion by properties
 val readability4jVersion by properties
 val guavaVersion by properties
 val epub4jVersion by properties
+val epubcheckVersion by properties
 val cliktVersion by properties
 
 plugins {
@@ -57,6 +58,9 @@ dependencies {
     implementation("org.jsoup:jsoup:${jsoupVersion}")
     implementation("net.dankito.readability4j:readability4j:${readability4jVersion}")
     implementation("io.documentnode:epub4j-core:${epub4jVersion}")
+    implementation("org.w3c:epubcheck:${epubcheckVersion}") {
+        exclude(group = "org.slf4j", module = "slf4j-nop")
+    }
 
     implementation("org.apache.logging.log4j:log4j-api:${log4jVersion}")
     implementation("org.apache.logging.log4j:log4j-core:${log4jVersion}")
