@@ -44,7 +44,8 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
 
     internal fun add(sequence: List<String>) {
         if (sequence.size < 1 || path2Document.size < 1 || sequence.size > path2Document.size) {
-            throw IllegalArgumentException()
+            throw IllegalArgumentException(
+                "sequence size: ${sequence.size} path2Document size: ${path2Document.size}")
         }
 
         val first = sequence[0]

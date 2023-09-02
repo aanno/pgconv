@@ -129,6 +129,7 @@ class CrawlAndRemoveContentDropdown(
         }
     }
 
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
     suspend fun applyReadability() {
         do {
             val readabilityDocument = readability.receive()
@@ -221,7 +222,7 @@ class CrawlAndRemoveContentDropdown(
             }
             if (!nextKnown && nextHref != null) {
                 logger.info("schedule unknown next ${nextHref}")
-                sendNextPage(nextHref!!, page)
+                sendNextPage(nextHref, page)
             }
         }
     }
@@ -270,7 +271,8 @@ class CrawlAndRemoveContentDropdown(
 
     private suspend fun sendPreviousPage(newPage: String, refPage: String) {
         val idx = allPages.indexOf(refPage)
-        if (idx < 0) throw IllegalArgumentException()
+        if (idx < 0)
+            throw IllegalArgumentException()
         allPages.add(newPage)
         pageSequenceFactory.add(newPage, refPage)
         logger.debug("sendPreviousPage: ${newPage}")
