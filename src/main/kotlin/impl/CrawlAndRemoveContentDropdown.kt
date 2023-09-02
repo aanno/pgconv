@@ -11,6 +11,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.select.Elements
 import java.io.File
+import java.io.IOException
 import java.lang.IllegalStateException
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
@@ -89,7 +90,7 @@ class CrawlAndRemoveContentDropdown(
 
     suspend fun parsePage() {
         val page = pageChannel.receive()
-        if (visitedPages.add(page)) GlobalScope.launch {
+        if (page != "" && visitedPages.add(page)) GlobalScope.launch {
             lastAction.set(System.currentTimeMillis())
             val doc: Document = connectWithProxyEnv(base + "/" + page).get()
             logger.info("Processing ${page}")
@@ -163,8 +164,12 @@ class CrawlAndRemoveContentDropdown(
             logger.info("${rd.hrefPath}: ${title}")
         }
         if (writeInterimFiles) {
-            File(rd.hrefPath).bufferedWriter().use {
-                it.write(doc.document.outHtmlWithPreamble())
+            try {
+                File(rd.hrefPath).bufferedWriter().use {
+                    it.write(doc.document.outHtmlWithPreamble())
+                }
+            } catch (e: IOException) {
+                logger.warn("Can't write ${rd}")
             }
         }
         path2Document.put(rd.hrefPath, doc)
@@ -217,11 +222,11 @@ class CrawlAndRemoveContentDropdown(
             logger.debug("nextNav: ${nextNav} ${nextKnown}")
 
             if (!prevKnown) {
-                logger.info("schedule unknown previous ${prevHref}")
+                logger.info("schedule unknown previous ${prevHref} ${page}")
                 sendPreviousPage(prevHref, page)
             }
             if (!nextKnown && nextHref != null) {
-                logger.info("schedule unknown next ${nextHref}")
+                logger.info("schedule unknown next ${nextHref} ${page}")
                 sendNextPage(nextHref, page)
             }
         }
