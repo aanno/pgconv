@@ -48,7 +48,7 @@ public class PgconvEpubChecker {
     boolean displayHelpOrVersion = false;
     boolean useCustomMessageFile = false;
     boolean failOnWarnings = false;
-    private Messages messages = Messages.getInstance();
+    private PgconvMessages messages = PgconvMessages.getInstance();
     private Locale locale = Locale.getDefault();
 
     int reportingLevel = ReportingLevel.Info;
@@ -557,7 +557,7 @@ public class PgconvEpubChecker {
                                 // allow it to fallback to the default in the case of invalid
                                 // language tags.
                                 this.locale = Locale.forLanguageTag(langTag);
-                                this.messages = Messages.getInstance(this.locale);
+                                this.messages = PgconvMessages.getInstance(this.locale);
                             }
                         } else {
                             System.err.println(String.format(messages.get("missing_locale")));
