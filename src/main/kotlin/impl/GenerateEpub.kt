@@ -47,15 +47,14 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
             val pages = HashSet(sequence)
             pages.removeAll(path2Document.keys)
             throw IllegalArgumentException(
-                "sequence size: ${sequence.size} path2Document size: ${path2Document.size} missing: ${pages}")
+                "sequence size: ${sequence.size} path2Document size: ${path2Document.size} missing: ${pages}"
+            )
         }
 
         val first = sequence[0]
-        if (first != null) {
-            val document = path2Document[first]
-            if (document != null) {
-                addBookMeta(document.metaTags)
-            }
+        val document = path2Document[first]
+        if (document != null) {
+            addBookMeta(document.metaTags)
         }
 
         sequence.forEach {

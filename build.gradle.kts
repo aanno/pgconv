@@ -61,6 +61,8 @@ dependencies {
     implementation("org.w3c:epubcheck:${epubcheckVersion}") {
         exclude(group = "org.slf4j", module = "slf4j-nop")
     }
+    // dependency of EpubChecker
+    implementation("io.mola.galimatias:galimatias:0.2.1")
 
     implementation("org.apache.logging.log4j:log4j-api:${log4jVersion}")
     implementation("org.apache.logging.log4j:log4j-core:${log4jVersion}")
@@ -109,7 +111,8 @@ tasks {
     named("compileJava", JavaCompile::class.java) {
         options.compilerArgumentProviders.add(CommandLineArgumentProvider {
             // Provide compiled Kotlin classes to javac – needed for Java/Kotlin mixed sources to work
-            listOf("--patch-module", "${pgconvModuleName}=${sourceSets["main"].output.asPath}")
+            listOf("--patch-module", "${pgconvModuleName}=${sourceSets["main"].output.asPath}",
+                "--add-reads", "org.github.aanno.pgconv=ALL-UNNAMED")
         })
     }
 
