@@ -4,8 +4,7 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="$USER_HOME$/.sdkman/candidates/gradle/current" />
+        <option name="externalProjectPath" value="/mnt/home/tpasch/scm/aanno/pgconv" />
         <option name="modules">
           <set>
             <option value="/mnt/home/tpasch/scm/aanno/pgconv" />
@@ -13,10 +12,11 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
-        <option name="externalProjectPath" value="/mnt/home/tpasch/scm/aanno/pgconv" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="$USER_HOME$/.sdkman/candidates/gradle/current" />
         <option name="modules">
           <set>
-            <option value="/mnt/home/tpasch/scm/aanno/pgconv" />
+            <option value="$PROJECT_DIR$" />
           </set>
         </option>
       </GradleProjectSettings>
