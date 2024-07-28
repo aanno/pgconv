@@ -43,9 +43,7 @@ class MetaTags() {
             // val httpEquiv = it.attr("http-equiv")
             // val key = if (name.isNullOrBlank()) httpEquiv else name
             val value = it.attr("content") ?: ""
-            if (key != null) {
-                metaTags.put(key, value)
-            }
+            metaTags.put(key, value)
         }
     }
 

@@ -13,13 +13,15 @@ val jdkVersion by properties
 val readability4jVersion by properties
 val guavaVersion by properties
 val epub4jVersion by properties
+val epubcheckVersion by properties
 val cliktVersion by properties
 
 plugins {
+    id("com.github.ben-manes.versions") version "0.51.0"
     java
     idea
     eclipse
-    kotlin("jvm") version "1.9.0"
+    kotlin("jvm") version "1.9.25"
     application
     distribution
 }
@@ -28,13 +30,17 @@ group = "org.github.aanno.pgconv"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    // https://appmediation.com/how-to-add-local-libraries-to-gradle/
+    flatDir {
+        dirs("libs")
+    }
     mavenCentral()
 }
 
 kotlin {
     jvmToolchain(jdkVersion.toString().toInt())
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_20)
     }
 }
 
@@ -57,10 +63,17 @@ dependencies {
     implementation("org.jsoup:jsoup:${jsoupVersion}")
     implementation("net.dankito.readability4j:readability4j:${readability4jVersion}")
     implementation("io.documentnode:epub4j-core:${epub4jVersion}")
+    implementation("org.w3c:epubcheck:${epubcheckVersion}") {
+        exclude(group = "org.slf4j", module = "slf4j-nop")
+    }
+    // dependency of EpubChecker
+    implementation("io.mola.galimatias:galimatias:0.2.1")
 
     implementation("org.apache.logging.log4j:log4j-api:${log4jVersion}")
     implementation("org.apache.logging.log4j:log4j-core:${log4jVersion}")
     implementation("org.apache.logging.log4j:log4j-api-kotlin:${log4jApiKotlinVersion}")
+    // https://stackoverflow.com/questions/20700053/how-to-add-local-jar-file-dependency-to-build-gradle-file
+    // implementation(files("libs/log4j-api-kotlin-${log4jApiKotlinVersion}.jar"))
 
     testImplementation(kotlin("test"))
 }
@@ -105,7 +118,8 @@ tasks {
     named("compileJava", JavaCompile::class.java) {
         options.compilerArgumentProviders.add(CommandLineArgumentProvider {
             // Provide compiled Kotlin classes to javac – needed for Java/Kotlin mixed sources to work
-            listOf("--patch-module", "${pgconvModuleName}=${sourceSets["main"].output.asPath}")
+            listOf("--patch-module", "${pgconvModuleName}=${sourceSets["main"].output.asPath}",
+                "--add-reads", "org.github.aanno.pgconv=ALL-UNNAMED")
         })
     }
 

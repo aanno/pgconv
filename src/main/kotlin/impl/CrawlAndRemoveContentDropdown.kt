@@ -11,6 +11,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.select.Elements
 import java.io.File
+import java.io.IOException
 import java.lang.IllegalStateException
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
@@ -18,6 +19,8 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
 internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
+
+private val WAIT_MS = 2000;
 
 class CrawlAndRemoveContentDropdown(
     private val base: String,
@@ -71,15 +74,16 @@ class CrawlAndRemoveContentDropdown(
                 } else {
                     parsePage()
                 }
-            } while (current - lastAction.get() <= 5000)
+            } while (current - lastAction.get() <= WAIT_MS)
             pageChannel.close()
             // TODO
             // readability.close()
-            logger.info("allPages: ${allPages}")
-            logger.info("sequence: ${pageSequenceFactory.build()}")
+            logger.info("allPages: ${allPages.size} ${allPages}")
+            val sequence = pageSequenceFactory.build()
+            logger.info("sequence: ${sequence.size} ${sequence}")
             // logger.info("path2Document: ${path2Document}")
             val generator = GenerateEpub(path2Document)
-            generator.add(pageSequenceFactory.build())
+            generator.add(sequence)
             val idx = root.indexOf('.')
             val outfile = root.substring(0, idx) + ".epub"
             generator.writeTo(File(outfile))
@@ -129,6 +133,7 @@ class CrawlAndRemoveContentDropdown(
         }
     }
 
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
     suspend fun applyReadability() {
         do {
             val readabilityDocument = readability.receive()
@@ -162,8 +167,12 @@ class CrawlAndRemoveContentDropdown(
             logger.info("${rd.hrefPath}: ${title}")
         }
         if (writeInterimFiles) {
-            File(rd.hrefPath).bufferedWriter().use {
-                it.write(doc.document.outHtmlWithPreamble())
+            try {
+                File(rd.hrefPath).bufferedWriter().use {
+                    it.write(doc.document.outHtmlWithPreamble())
+                }
+            } catch (e: IOException) {
+                logger.warn("Can't write ${rd}")
             }
         }
         path2Document.put(rd.hrefPath, doc)
@@ -216,12 +225,12 @@ class CrawlAndRemoveContentDropdown(
             logger.debug("nextNav: ${nextNav} ${nextKnown}")
 
             if (!prevKnown) {
-                logger.info("schedule unknown previous ${prevHref}")
+                logger.info("schedule unknown previous ${prevHref} ${page}")
                 sendPreviousPage(prevHref, page)
             }
             if (!nextKnown && nextHref != null) {
-                logger.info("schedule unknown next ${nextHref}")
-                sendNextPage(nextHref!!, page)
+                logger.info("schedule unknown next ${nextHref} ${page}")
+                sendNextPage(nextHref, page)
             }
         }
     }
@@ -261,32 +270,41 @@ class CrawlAndRemoveContentDropdown(
     }
 
     private suspend fun sendNextTocPage(newPage1: String, newPage2: String) {
-        allPages.add(newPage1)
-        // allPages.add(newPage2)
-        pageSequenceFactory.add(newPage1, newPage2)
-        logger.debug("sendNextTocPage: ${newPage1} ${newPage2}")
-        pageChannel.send(newPage1)
+        if (sendPage(newPage1)) {
+            pageSequenceFactory.add(newPage1, newPage2)
+            sendPage(newPage2)
+        }
+    }
+
+    private suspend fun sendPage(newPage: String): Boolean {
+        val result = allPages.add(newPage)
+        if (result) {
+            pageChannel.send(newPage)
+        }
+        return result
     }
 
     private suspend fun sendPreviousPage(newPage: String, refPage: String) {
         // if (newPage != null && newPage.length > 0) {
             val idx = allPages.indexOf(refPage)
-            if (idx < 0) throw IllegalArgumentException()
-            allPages.add(newPage)
+        if (idx < 0)
+            throw IllegalArgumentException()
+        if (sendPage(newPage)) {
             pageSequenceFactory.add(newPage, refPage)
             logger.debug("sendPreviousPage: ${newPage}")
-            pageChannel.send(newPage)
+        }
         // }
     }
 
     private suspend fun sendNextPage(newPage: String, refPage: String) {
         // if (newPage != null && newPage.length > 0) {
             val idx = allPages.indexOf(refPage)
-            if (idx < 0) throw IllegalArgumentException()
-            allPages.add(newPage)
+        if (idx < 0)
+            throw IllegalArgumentException()
+        if (sendPage(newPage)) {
             pageSequenceFactory.add(refPage, newPage)
             logger.debug("sendPreviousPage: ${newPage}")
-            pageChannel.send(newPage)
+        }
         // }
     }
 

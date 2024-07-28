@@ -12,7 +12,7 @@ import org.github.aanno.pgconv.impl.CrawlAndRemoveContentDropdown
 private class Command : CliktCommand() {
 
     val url by argument()
-        .help("URL to book main page on https://www.projekt-gutenberg.org/")
+        .help("URL to book main page on https://www.projekt-gutenberg.org/ e.g. https://www.projekt-gutenberg.org/jeanpaul/badereis/badereis.html")
 
     val noReadablility4j by option(
         help = "don't process html with Readability4J"

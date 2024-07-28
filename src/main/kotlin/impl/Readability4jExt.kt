@@ -5,6 +5,8 @@ import net.dankito.readability4j.Article
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Entities
+import org.jsoup.nodes.Node
+import java.lang.IllegalStateException
 
 fun Article.getContentWithEncodingAsElement(encoding: String): Document {
     /*
@@ -22,7 +24,7 @@ fun Article.getContentWithEncodingAsElement(encoding: String): Document {
     val metaCharset = head.appendElement("meta")
     metaCharset.attr("charset", encoding)
     val body = html.appendElement("body")
-    body.appendChild(articleContent)
+    body.appendChild(articleContent!! as Node)
     return document
 }
 

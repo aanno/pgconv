@@ -13,7 +13,7 @@ class SequenceFactory {
     private val queue: Queue<PrevNext> = ConcurrentLinkedQueue<PrevNext>()
 
     fun add(prev: String, next: String) {
-        if (prev != null && prev.trim().length > 0 && next != null && next.trim().length > 0) {
+        if (prev.trim().length > 0 && next.trim().length > 0) {
             queue.add(PrevNext(prev, next))
         }
     }

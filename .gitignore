@@ -3,6 +3,7 @@
 /pgconv-*
 /*log
 /*_ebookmaker
+libs/log4j-api-kotlin-1.5.0-SNAPSHOT.jar
 
 ### gradle
 .gradle
