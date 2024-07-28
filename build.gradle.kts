@@ -30,6 +30,10 @@ group = "org.github.aanno.pgconv"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    // https://appmediation.com/how-to-add-local-libraries-to-gradle/
+    flatDir {
+        dirs("libs")
+    }
     mavenCentral()
 }
 
@@ -68,6 +72,8 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-api:${log4jVersion}")
     implementation("org.apache.logging.log4j:log4j-core:${log4jVersion}")
     implementation("org.apache.logging.log4j:log4j-api-kotlin:${log4jApiKotlinVersion}")
+    // https://stackoverflow.com/questions/20700053/how-to-add-local-jar-file-dependency-to-build-gradle-file
+    // implementation(files("libs/log4j-api-kotlin-${log4jApiKotlinVersion}.jar"))
 
     testImplementation(kotlin("test"))
 }
