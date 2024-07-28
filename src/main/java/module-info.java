@@ -10,7 +10,6 @@ module org.github.aanno.pgconv {
     requires org.w3c.epubcheck;
     // not jpms ready dependencies (all in UNNAMED module)
     // requires galimatias;
-    // requires log4j.api.kotlin;
     // requires readability4j;
     // requires jsr305;
     // requires clikt.jvm;
