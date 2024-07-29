@@ -16,6 +16,7 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
@@ -43,6 +44,8 @@ class CrawlAndRemoveContentDropdown(
         ConcurrentSkipListMap<String, ReadabilityDocument>()
 
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
+
+    private val tocPageProcessed = AtomicBoolean(false)
 
     fun parseOld() {
         val doc: Document = Jsoup.connect("https://en.wikipedia.org/").get()
@@ -107,12 +110,25 @@ class CrawlAndRemoveContentDropdown(
 
             // not already done
             logger.debug(doc.title())
+
             // remove table stuff
             doc.select(".navi-gb-ed15").remove()
             doc.select(".navi-gb").remove()
+
+            // toc is only there sometimes
+            val toc: Elements = doc.select(".toc")
+            val anchorsInToc = toc.select("a")
+            if (anchorsInToc.size <= 0 && !tocPageProcessed.getAndSet(true)) {
+                // if there is no toc, try to read index.html as second page
+                logger.debug("no toc - processing index.html")
+                sendPage(page)
+                sendNextPage("index.html", page)
+            }
+
             // remove content dropdown
             val tocContent: Elements = doc.select(".dropdown-content").remove()
-            parseTocContent(tocContent)
+            val noAnchors = parseTocContent(tocContent)
+
             // remove content stuff
             doc.select(".dropdown").remove()
             // remove author on the right
@@ -125,11 +141,12 @@ class CrawlAndRemoveContentDropdown(
             doc.select(".anzeige-chap").remove()
 
             // title page processing
-            val toc: Elements = doc.select(".toc")
-            toc.select("a").forEach { e ->
-                e.attr("href", anchor2Page(e.attr("href"), page))
+            if (!tocPageProcessed.getAndSet(true)) {
+                anchorsInToc.forEach { e ->
+                    e.attr("href", anchor2Page(e.attr("href"), page))
+                }
             }
-            val normalPage = toc.isEmpty()
+            val normalPage = toc.isEmpty() && noAnchors == 0
 
             parseNav(page, doc)
             val meta = MetaTags.of(doc)
@@ -260,7 +277,7 @@ class CrawlAndRemoveContentDropdown(
     }
 
 
-    suspend fun parseTocContent(dropdownContent: Elements) {
+    suspend fun parseTocContent(dropdownContent: Elements): Int {
         logger.debug("parseTocContent")
         val elements = dropdownContent
             .select("a")
@@ -273,6 +290,7 @@ class CrawlAndRemoveContentDropdown(
             }
         // decreased performance
         // allPages.addAll(elements)
+        return elements.size
     }
 
 
