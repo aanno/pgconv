@@ -99,8 +99,8 @@ class CrawlAndRemoveContentDropdown(
         if (visitedPages.add(page)) GlobalScope.launch {
             lastAction.set(System.currentTimeMillis())
             // https://jsoup.org/cookbook/cleaning-html/safelist-sanitizer
-            val doc: Document = connectWithProxyEnv(base + "/" + page).get()
-            // val doc: Document = CLEANER.clean(connectWithProxyEnv(base + "/" + page).get())
+            // val doc: Document = connectWithProxyEnv(base + "/" + page).get()
+            val doc: Document = CLEANER.clean(connectWithProxyEnv(base + "/" + page).get())
             // does _not_ really set baseUri
             doc.setBaseUri(base)
             logger.info("Processing ${page}")
@@ -181,9 +181,11 @@ class CrawlAndRemoveContentDropdown(
                 File(rd.hrefPath).bufferedWriter().use {
                     it.write(doc.document.outHtmlWithPreamble())
                 }
+                /*
                 File("cleaned-" + rd.hrefPath).bufferedWriter().use {
                     it.write(CLEANER.clean(doc.document).outHtmlWithPreamble())
                 }
+                 */
             } catch (e: IOException) {
                 logger.warn("Can't write ${rd}")
             }

@@ -60,8 +60,11 @@ fun connectWithProxyEnv(url: String): Connection {
 
 fun mySafelist(): Safelist {
     var result = Safelist.relaxed()
-    result = result.addTags("meta", "head")
+    result = result.addTags("meta", "head", "title")
     result = result.addAttributes("meta", "name", "content", "http-equiv", "charset")
+    result = result.addAttributes("img", "src")
+    result = result.addAttributes("li", "value")
+    result = result.addAttributes(":all", "id", "class")
     result = result.preserveRelativeLinks(true)
     // Jsoup has problems to understand relative paths _without protocol_.
     // Unsure if this is because of it's strange baseUri handling.
