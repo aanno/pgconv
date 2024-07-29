@@ -24,6 +24,18 @@ fun Article.getContentWithEncodingAsElement(encoding: String): Document {
     metaCharset.attr("charset", encoding)
     val body = html.appendElement("body")
     body.appendChild(articleContent!! as Node)
+
+    // for unknown reasons articleContent contains inner tags of header in body, hence
+    // is it because of org.github.aanno.pgconv.impl.CrawlAndRemoveContentDropdown.applyReadability ?!?
+    body.select("meta").remove()
+    body.select("link").remove()
+    body.select("script").remove()
+    // ???
+    val title = body.select("title").remove()
+    if (title.first() != null) {
+        head.appendChild(title.first())
+    }
+
     return document
 }
 
