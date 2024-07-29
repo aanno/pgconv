@@ -26,6 +26,10 @@ private class Command : CliktCommand() {
         help = "don't clean/sanitize with JSoup clean"
     ).boolean().default(false)
 
+    val noEpubChecker by option(
+        help = "don't run EPUBChecker on generated epub file"
+    ).boolean().default(false)
+
     @ExperimentalCoroutinesApi
     override
     fun run() {
@@ -37,8 +41,17 @@ private class Command : CliktCommand() {
         val main: CrawlAndRemoveContentDropdown = CrawlAndRemoveContentDropdown(
             base, noReadablility4j, writeInterimFiles, noJsoupCleaner
         );
-        main.parsePageRec(root)
-        println("time for conversion: " + (System.currentTimeMillis() - start) + "ms")
+        val epub = main.parsePageRec(root)
+        val afterGenerate: Long = System.currentTimeMillis()
+        println("time for conversion: " + (afterGenerate - start) + "ms")
+        if (!noEpubChecker) {
+            val checker = PgconvEpubChecker()
+            checker.run(arrayOf(epub!!.canonicalPath, "--profile", "default", "--out", "check.xml"))
+            // Exception in thread "main" java.lang.UnsupportedOperationException: ResourceBundle.Control not supported in named modules
+            // evokeCheckFromKotlin(arrayOf(epub!!.canonicalPath))
+            val afterCheck: Long = System.currentTimeMillis()
+            println("time for check: " + (afterCheck - afterGenerate) + "ms")
+        }
     }
 }
 

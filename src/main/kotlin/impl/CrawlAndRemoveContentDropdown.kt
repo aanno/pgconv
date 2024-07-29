@@ -62,8 +62,9 @@ class CrawlAndRemoveContentDropdown(
     }
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
-    fun parsePageRec(root: String) {
+    fun parsePageRec(root: String): File? {
         this.root = root
+        var outFile: File?
         runBlocking<Unit>(Dispatchers.Default) {
             GlobalScope.launch {
                 pageChannel.send(root)
@@ -91,10 +92,12 @@ class CrawlAndRemoveContentDropdown(
             val generator = GenerateEpub(path2Document)
             generator.add(sequence)
             val idx = root.indexOf('.')
-            val outfile = root.substring(0, idx) + ".epub"
-            generator.writeTo(File(outfile))
-            logger.info("epub written to ${outfile}")
+            val outFilename = root.substring(0, idx) + ".epub"
+            outFile = File(outFilename)
+            generator.writeTo(outFile)
+            logger.info("epub written to ${outFilename}")
         }
+        return outFile
     }
 
     suspend fun parsePage() {

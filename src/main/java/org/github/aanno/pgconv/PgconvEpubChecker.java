@@ -12,10 +12,13 @@ import com.adobe.epubcheck.reporting.CheckingReport;
 import com.adobe.epubcheck.util.*;
 import io.mola.galimatias.GalimatiasParseException;
 import io.mola.galimatias.URL;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.epubcheck.core.Checker;
 import org.w3c.epubcheck.util.url.URLUtils;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -25,6 +28,7 @@ import java.util.regex.Pattern;
 
 public class PgconvEpubChecker {
 
+    private static final Logger logger = LogManager.getLogger(PgconvEpubChecker.class);
     private static final HashMap<OPSType, String> modeMimeTypeMap;
     private static final String EPUBCHECK_CUSTOM_MESSAGE_FILE = "ePubCheckCustomMessageFile";
 
@@ -75,6 +79,7 @@ public class PgconvEpubChecker {
 
 
     public int run(String[] args) {
+        logger.info("run EpubChecker on " + Arrays.toString(args));
         Report report = null;
         int returnValue = 1;
         try {

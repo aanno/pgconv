@@ -9,6 +9,7 @@ module org.github.aanno.pgconv {
     requires kotlinx.coroutines.core;
     requires com.google.common;
     requires org.w3c.epubcheck;
+    requires org.apache.logging.log4j.core;
     // not jpms ready dependencies (all in UNNAMED module)
     // requires galimatias;
     // requires readability4j;

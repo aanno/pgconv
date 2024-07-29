@@ -65,12 +65,16 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
         }
     }
 
-    fun writeTo(file: File) {
-        val writer = EpubWriter()
-        BufferedOutputStream(file.outputStream()).use {
-            writer.write(book, it)
+    fun writeTo(file: File?) {
+        if (file != null) {
+            val writer = EpubWriter()
+            BufferedOutputStream(file.outputStream()).use {
+                writer.write(book, it)
+            }
+            logger.info("epub written to ${file}")
+        } else {
+            logger.error("no epub generated ?!?")
         }
-        logger.info("epub written to ${file}")
     }
 
     fun getResource(href: String): Resource {
