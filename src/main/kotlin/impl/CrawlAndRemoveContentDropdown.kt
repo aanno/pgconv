@@ -9,10 +9,11 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
+import org.jsoup.safety.Cleaner
+import org.jsoup.safety.Safelist
 import org.jsoup.select.Elements
 import java.io.File
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicLong
@@ -21,12 +22,13 @@ import javax.annotation.Nullable
 internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
 
 private val WAIT_MS = 2000;
+private val CLEANER = Cleaner(mySafelist())
 
 class CrawlAndRemoveContentDropdown(
     private val base: String,
     private val noReadablility4j: Boolean = false,
-    private val writeInterimFiles: Boolean = false) {
-
+    private val writeInterimFiles: Boolean = false
+) {
     companion object : Logging
 
     private var root: String? = null
@@ -37,7 +39,8 @@ class CrawlAndRemoveContentDropdown(
     private val allPages: MutableSet<String> = ConcurrentSkipListSet<String>()
     private val pageSequenceFactory = SequenceFactory()
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
-    private val path2Document: MutableMap<String, ReadabilityDocument> = ConcurrentSkipListMap<String, ReadabilityDocument>()
+    private val path2Document: MutableMap<String, ReadabilityDocument> =
+        ConcurrentSkipListMap<String, ReadabilityDocument>()
 
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
 
@@ -95,7 +98,11 @@ class CrawlAndRemoveContentDropdown(
         val page = pageChannel.receive()
         if (visitedPages.add(page)) GlobalScope.launch {
             lastAction.set(System.currentTimeMillis())
+            // https://jsoup.org/cookbook/cleaning-html/safelist-sanitizer
             val doc: Document = connectWithProxyEnv(base + "/" + page).get()
+            // val doc: Document = CLEANER.clean(connectWithProxyEnv(base + "/" + page).get())
+            // does _not_ really set baseUri
+            doc.setBaseUri(base)
             logger.info("Processing ${page}")
 
             // not already done
@@ -156,9 +163,11 @@ class CrawlAndRemoveContentDropdown(
             // writeMeta(article.articleContent)
             // to get content wrapped in <html> tags and encoding set to UTF-8, see chapter 'Output encoding'
             // extractedContentHtmlWithUtf8Encoding = article.contentWithUtf8Encoding
-            doc = ReadabilityDocument(doc.hrefPath, article.getContentWithEncodingAsElement(
-                "utf-8", rd.metaTags
-            ), doc.metaTags)
+            doc = ReadabilityDocument(
+                doc.hrefPath, article.getContentWithEncodingAsElement(
+                    "utf-8", rd.metaTags
+                ), doc.metaTags
+            )
             // val extractedContentPlainText: String = article.getTextContent()
             val title = article.title
             // both not implemented
@@ -167,9 +176,13 @@ class CrawlAndRemoveContentDropdown(
             logger.info("${rd.hrefPath}: ${title}")
         }
         if (writeInterimFiles) {
+            // doc.document.setBaseUri(base)
             try {
                 File(rd.hrefPath).bufferedWriter().use {
                     it.write(doc.document.outHtmlWithPreamble())
+                }
+                File("cleaned-" + rd.hrefPath).bufferedWriter().use {
+                    it.write(CLEANER.clean(doc.document).outHtmlWithPreamble())
                 }
             } catch (e: IOException) {
                 logger.warn("Can't write ${rd}")
@@ -286,7 +299,7 @@ class CrawlAndRemoveContentDropdown(
 
     private suspend fun sendPreviousPage(newPage: String, refPage: String) {
         // if (newPage != null && newPage.length > 0) {
-            val idx = allPages.indexOf(refPage)
+        val idx = allPages.indexOf(refPage)
         if (idx < 0)
             throw IllegalArgumentException()
         if (sendPage(newPage)) {
@@ -298,7 +311,7 @@ class CrawlAndRemoveContentDropdown(
 
     private suspend fun sendNextPage(newPage: String, refPage: String) {
         // if (newPage != null && newPage.length > 0) {
-            val idx = allPages.indexOf(refPage)
+        val idx = allPages.indexOf(refPage)
         if (idx < 0)
             throw IllegalArgumentException()
         if (sendPage(newPage)) {

@@ -2,9 +2,11 @@ package org.github.aanno.pgconv.impl
 
 import org.jsoup.Connection
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Attribute
+import org.jsoup.nodes.Attributes
 import org.jsoup.nodes.Document
-import java.lang.BootstrapMethodError
-import java.lang.IllegalStateException
+import org.jsoup.nodes.Element
+import org.jsoup.safety.Safelist
 import java.net.URL
 
 private var proxyHaveRun = false
@@ -54,6 +56,29 @@ fun connectWithProxyEnv(url: String): Connection {
         }
     }
     throw IllegalStateException(url)
+}
+
+fun mySafelist(): Safelist {
+    var result = Safelist.relaxed()
+    result = result.addTags("meta", "head")
+    result = result.addAttributes("meta", "name", "content", "http-equiv", "charset")
+    result = result.preserveRelativeLinks(true)
+    // Jsoup has problems to understand relative paths _without protocol_.
+    // Unsure if this is because of it's strange baseUri handling.
+    // baseUri seem not to propagate to inner nodes.
+    // This solution is an incomplete HACK.
+    return object : Safelist(result) {
+        override fun isSafeAttribute(tagName: String, el: Element, attr: Attribute): Boolean {
+            val key = attr.key
+            if (isSafeTag(tagName) && (key == "src" || key == "href")) {
+                val value = attr.value
+                if (value.indexOf(":") < 0 && value.indexOf("//") < 0) {
+                    return true;
+                }
+            }
+            return super.isSafeAttribute(tagName, el, attr);
+        }
+    }
 }
 
 fun Document.outHtmlWithPreamble(): String {
