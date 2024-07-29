@@ -109,6 +109,7 @@ class CrawlAndRemoveContentDropdown(
             logger.debug(doc.title())
             // remove table stuff
             doc.select(".navi-gb-ed15").remove()
+            doc.select(".navi-gb").remove()
             // remove content dropdown
             val tocContent: Elements = doc.select(".dropdown-content").remove()
             parseTocContent(tocContent)
@@ -120,6 +121,8 @@ class CrawlAndRemoveContentDropdown(
             doc.select("hr").remove()
             // remove all js
             doc.select("script").remove()
+            // remove adversing
+            doc.select(".anzeige-chap").remove()
 
             // title page processing
             val toc: Elements = doc.select(".toc")
@@ -246,6 +249,12 @@ class CrawlAndRemoveContentDropdown(
             if (!nextKnown && nextHref != null) {
                 logger.info("schedule unknown next ${nextHref} ${page}")
                 sendNextPage(nextHref, page)
+            }
+            // remove previous nav (it will still be there at end of page)
+            prevNav.remove()
+            if (nextNav != null) {
+                // remove next nav (it will still be there at end of page)
+                nextNav.remove()
             }
         }
     }
