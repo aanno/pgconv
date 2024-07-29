@@ -110,7 +110,17 @@ class CrawlAndRemoveContentDropdown(
                         it.write(doc.outHtmlWithPreamble())
                     }
                 }
+                // cleaner has the bug to remove all of head (meta, title, link, script, ...)
+                val realHead = doc.select("head").first()
+                realHead.select("link").remove()
+                realHead.select("script").remove()
+                logger.debug("readHead: ${realHead}")
                 doc = CLEANER.clean(doc)
+                val cleanedHead = doc.select("head").first()
+                // remove all children
+                cleanedHead.select("*").remove()
+                cleanedHead.appendChildren(realHead.select("*").clone())
+                logger.debug("cleanedHead: ${cleanedHead}")
             }
             // does _not_ really set baseUri
             doc.setBaseUri(base)
@@ -147,6 +157,8 @@ class CrawlAndRemoveContentDropdown(
             doc.select("script").remove()
             // remove adversing
             doc.select(".anzeige-chap").remove()
+            // remove button
+            doc.select(".bottomnavi-gb").remove()
 
             // title page processing
             if (!tocPageProcessed.getAndSet(true)) {

@@ -36,7 +36,10 @@ class MetaTags() {
 
     fun storeMeta(doc: Document) {
         doc.select("meta").forEach {
-            val key = it.attr("name")
+            var key = it.attr("name")
+            if (key.isEmpty()) {
+                key = it.attr("http-equiv")
+            }
             // val httpEquiv = it.attr("http-equiv")
             // val key = if (name.isNullOrBlank()) httpEquiv else name
             val value = it.attr("content") ?: ""
@@ -52,7 +55,11 @@ class MetaTags() {
                 val v = metaTags.get(k)
                 if (v.size == 1) {
                     val attrs = Attributes()
-                    attrs.add("name", k)
+                    if (k == "Content-Type" || k == "content-language") {
+                        attrs.add("http-equiv", k)
+                    } else {
+                        attrs.add("name", k)
+                    }
                     attrs.add("content", v.iterator().next())
                     head.appendChild(Element(Tag.valueOf("meta"), null, attrs))
                 }
