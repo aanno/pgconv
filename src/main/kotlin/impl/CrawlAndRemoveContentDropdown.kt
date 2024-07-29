@@ -28,7 +28,8 @@ private val CLEANER = Cleaner(mySafelist())
 class CrawlAndRemoveContentDropdown(
     private val base: String,
     private val noReadablility4j: Boolean = false,
-    private val writeInterimFiles: Boolean = false
+    private val writeInterimFiles: Boolean = false,
+    private val noJsoupCleaner: Boolean = false
 ) {
     companion object : Logging
 
@@ -102,8 +103,16 @@ class CrawlAndRemoveContentDropdown(
         if (visitedPages.add(page)) GlobalScope.launch {
             lastAction.set(System.currentTimeMillis())
             // https://jsoup.org/cookbook/cleaning-html/safelist-sanitizer
-            // val doc: Document = connectWithProxyEnv(base + "/" + page).get()
-            val doc: Document = CLEANER.clean(connectWithProxyEnv(base + "/" + page).get())
+            var doc: Document = connectWithProxyEnv(base + "/" + page).get()
+            if (!noJsoupCleaner) {
+                // when doing jsoup cleaning, also preserve uncleaned files
+                if (writeInterimFiles) {
+                    File("uncleaned-" + page).bufferedWriter().use {
+                        it.write(doc.outHtmlWithPreamble())
+                    }
+                }
+                doc = CLEANER.clean(doc)
+            }
             // does _not_ really set baseUri
             doc.setBaseUri(base)
             logger.info("Processing ${page}")
