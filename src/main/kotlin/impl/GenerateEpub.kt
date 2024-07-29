@@ -58,9 +58,9 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
         }
 
         sequence.forEach {
-            val document = path2Document[it]
-            if (document != null) {
-                addSection(it, document.hrefPath)
+            val document2 = path2Document[it]
+            if (document2 != null) {
+                addSection(it, document2.hrefPath)
             }
         }
     }

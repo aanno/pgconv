@@ -40,8 +40,6 @@ class MetaTags() {
             if (key.isEmpty()) {
                 key = it.attr("http-equiv")
             }
-            // val httpEquiv = it.attr("http-equiv")
-            // val key = if (name.isNullOrBlank()) httpEquiv else name
             val value = it.attr("content") ?: ""
             metaTags.put(key, value)
         }
@@ -50,6 +48,7 @@ class MetaTags() {
     fun writeMeta(element: Element?) {
         if (element != null) {
             val head: Element = element.selectFirst("head")!!
+            var title: String? = null
             logger.info("write ${metaTags.keySet().size} meta tags")
             metaTags.keySet().forEach { k ->
                 val v = metaTags.get(k)
@@ -60,9 +59,16 @@ class MetaTags() {
                     } else {
                         attrs.add("name", k)
                     }
-                    attrs.add("content", v.iterator().next())
+                    val value = v.iterator().next()
+                    attrs.add("content", value)
                     head.appendChild(Element(Tag.valueOf("meta"), null, attrs))
+                    if (k == "title") {
+                        title = value
+                    }
                 }
+            }
+            if (title != null && head.selectFirst("title") == null) {
+                head.append("<title>${title}</title>")
             }
         }
     }

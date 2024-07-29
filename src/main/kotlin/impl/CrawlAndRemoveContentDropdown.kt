@@ -49,7 +49,7 @@ class CrawlAndRemoveContentDropdown(
 
     fun parseOld() {
         val doc: Document = Jsoup.connect("https://en.wikipedia.org/").get()
-        logger.info(doc.title())
+        logger.debug("doc.title: ${doc.title()}")
         val newsHeadlines: Elements = doc.select("#mp-itn b a")
         for (headline in newsHeadlines) {
             logger.info(
@@ -111,23 +111,27 @@ class CrawlAndRemoveContentDropdown(
                     }
                 }
                 // cleaner has the bug to remove all of head (meta, title, link, script, ...)
-                val realHead = doc.select("head").first()
-                realHead.select("link").remove()
-                realHead.select("script").remove()
+                val realHead = doc.selectFirst("head")
+                if (realHead != null) {
+                    realHead.select("link").remove()
+                    realHead.select("script").remove()
+                }
                 logger.debug("readHead: ${realHead}")
                 doc = CLEANER.clean(doc)
-                val cleanedHead = doc.select("head").first()
-                // remove all children
-                cleanedHead.select("*").remove()
-                cleanedHead.appendChildren(realHead.select("*").clone())
-                logger.debug("cleanedHead: ${cleanedHead}")
+                val cleanedHead = doc.selectFirst("head")
+                if (cleanedHead != null) {
+                    // remove all children
+                    cleanedHead.select("*").remove()
+                    cleanedHead.appendChildren(realHead!!.select("*").clone())
+                    logger.debug("cleanedHead: ${cleanedHead}")
+                }
             }
             // does _not_ really set baseUri
             doc.setBaseUri(base)
             logger.info("Processing ${page}")
 
             // not already done
-            logger.debug(doc.title())
+            logger.debug("doc.title: ${doc.title()}")
 
             // remove table stuff
             doc.select(".navi-gb-ed15").remove()
@@ -213,7 +217,7 @@ class CrawlAndRemoveContentDropdown(
             // both not implemented
             // val byline = article.byline
             // val excerpt = article.excerpt
-            logger.info("${rd.hrefPath}: ${title}")
+            logger.info("hrefPath ${rd.hrefPath} -> article.title: ${title}")
         }
         if (writeInterimFiles) {
             // doc.document.setBaseUri(base)
@@ -221,11 +225,6 @@ class CrawlAndRemoveContentDropdown(
                 File(rd.hrefPath).bufferedWriter().use {
                     it.write(doc.document.outHtmlWithPreamble())
                 }
-                /*
-                File("cleaned-" + rd.hrefPath).bufferedWriter().use {
-                    it.write(CLEANER.clean(doc.document).outHtmlWithPreamble())
-                }
-                 */
             } catch (e: IOException) {
                 logger.warn("Can't write ${rd}")
             }

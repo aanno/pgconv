@@ -33,7 +33,7 @@ fun Article.getContentWithEncodingAsElement(encoding: String): Document {
     // ???
     val title = body.select("title").remove()
     if (title.first() != null) {
-        head.appendChild(title.first())
+        head.appendChild(title.first() as Node)
     }
 
     return document
