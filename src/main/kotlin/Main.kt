@@ -35,7 +35,8 @@ private class Command : CliktCommand() {
 
         val start: Long = System.currentTimeMillis();
         val main: CrawlAndRemoveContentDropdown = CrawlAndRemoveContentDropdown(
-            base, noReadablility4j, writeInterimFiles, noJsoupCleaner);
+            base, noReadablility4j, writeInterimFiles, noJsoupCleaner
+        );
         main.parsePageRec(root)
         println("time for conversion: " + (System.currentTimeMillis() - start) + "ms")
     }

@@ -1,9 +1,6 @@
 package org.github.aanno.pgconv.impl
 
-import java.lang.IllegalStateException
-import java.util.Deque
-import java.util.LinkedList
-import java.util.Queue
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 private data class PrevNext(val prev: String, val next: String)
@@ -31,7 +28,8 @@ class SequenceFactory {
                 result.add(prevIdx + 1, it.next)
             } else {
                 if (prevIdx + 1 != nextIdx) throw IllegalStateException(
-                    "prev: ${it.prev} (${prevIdx}) next: ${it.next} (${nextIdx}) queue: ${queue}")
+                    "prev: ${it.prev} (${prevIdx}) next: ${it.next} (${nextIdx}) queue: ${queue}"
+                )
             }
         }
         return result

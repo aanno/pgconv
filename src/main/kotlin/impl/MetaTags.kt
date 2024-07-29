@@ -1,15 +1,12 @@
 package impl;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
 import org.apache.logging.log4j.kotlin.logger
 import org.jsoup.nodes.Attributes
-import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Tag
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
-import kotlin.text.StringBuilder
 
 class MetaTags() {
 

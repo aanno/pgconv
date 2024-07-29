@@ -6,7 +6,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Entities
 import org.jsoup.nodes.Node
-import java.lang.IllegalStateException
 
 fun Article.getContentWithEncodingAsElement(encoding: String): Document {
     /*

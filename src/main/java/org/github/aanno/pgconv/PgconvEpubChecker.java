@@ -25,11 +25,28 @@ import java.util.regex.Pattern;
 
 public class PgconvEpubChecker {
 
+    private static final HashMap<OPSType, String> modeMimeTypeMap;
+    private static final String EPUBCHECK_CUSTOM_MESSAGE_FILE = "ePubCheckCustomMessageFile";
+
     static {
         /* fix #665 (window-less "Checker" gui app on Mac)
          * set -Djava.awt.headless=true programmatically as early as possible
          */
         System.setProperty("java.awt.headless", "true");
+    }
+
+    static {
+        HashMap<OPSType, String> map = new HashMap<OPSType, String>();
+
+        map.put(new OPSType("xhtml", EPUBVersion.VERSION_2), "application/xhtml+xml");
+        map.put(new OPSType("xhtml", EPUBVersion.VERSION_3), "application/xhtml+xml");
+
+        map.put(new OPSType("svg", EPUBVersion.VERSION_2), "image/svg+xml");
+        map.put(new OPSType("svg", EPUBVersion.VERSION_3), "image/svg+xml");
+
+        map.put(new OPSType("mo", EPUBVersion.VERSION_3), "application/smil+xml");
+        map.put(new OPSType("nav", EPUBVersion.VERSION_3), "application/xhtml+xml");
+        modeMimeTypeMap = map;
     }
 
     String path = null;
@@ -48,27 +65,9 @@ public class PgconvEpubChecker {
     boolean displayHelpOrVersion = false;
     boolean useCustomMessageFile = false;
     boolean failOnWarnings = false;
+    int reportingLevel = ReportingLevel.Info;
     private PgconvMessages messages = PgconvMessages.getInstance();
     private Locale locale = Locale.getDefault();
-
-    int reportingLevel = ReportingLevel.Info;
-
-    private static final HashMap<OPSType, String> modeMimeTypeMap;
-    private static final String EPUBCHECK_CUSTOM_MESSAGE_FILE = "ePubCheckCustomMessageFile";
-
-    static {
-        HashMap<OPSType, String> map = new HashMap<OPSType, String>();
-
-        map.put(new OPSType("xhtml", EPUBVersion.VERSION_2), "application/xhtml+xml");
-        map.put(new OPSType("xhtml", EPUBVersion.VERSION_3), "application/xhtml+xml");
-
-        map.put(new OPSType("svg", EPUBVersion.VERSION_2), "image/svg+xml");
-        map.put(new OPSType("svg", EPUBVersion.VERSION_3), "image/svg+xml");
-
-        map.put(new OPSType("mo", EPUBVersion.VERSION_3), "application/smil+xml");
-        map.put(new OPSType("nav", EPUBVersion.VERSION_3), "application/xhtml+xml");
-        modeMimeTypeMap = map;
-    }
 
     public Locale getLocale() {
         return locale;

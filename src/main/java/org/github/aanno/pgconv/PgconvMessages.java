@@ -13,6 +13,21 @@ public class PgconvMessages {
 
     protected static final String BUNDLE_NAME = "com.adobe.epubcheck.util.messages";
     protected static final Table<String, Locale, PgconvMessages> messageTable = HashBasedTable.create();
+    protected ResourceBundle bundle;
+    protected Locale locale;
+
+    protected PgconvMessages(Locale locale, String bundleName) {
+        this.locale = (locale != null) ? locale : Locale.getDefault();
+        this.bundle = ResourceBundle.getBundle(bundleName, this.locale /*, new UTF8Control() */);
+    }
+
+    protected PgconvMessages() {
+        this(null);
+    }
+
+    protected PgconvMessages(Locale locale) {
+        this(locale, BUNDLE_NAME);
+    }
 
     public static PgconvMessages getInstance() {
         return getInstance(null, null);
@@ -54,22 +69,6 @@ public class PgconvMessages {
         String className = cls.getName();
         int i = className.lastIndexOf('.');
         return ((i > 0) ? className.substring(0, i + 1) : "") + "messages";
-    }
-
-    protected ResourceBundle bundle;
-    protected Locale locale;
-
-    protected PgconvMessages(Locale locale, String bundleName) {
-        this.locale = (locale != null) ? locale : Locale.getDefault();
-        this.bundle = ResourceBundle.getBundle(bundleName, this.locale /*, new UTF8Control() */);
-    }
-
-    protected PgconvMessages() {
-        this(null);
-    }
-
-    protected PgconvMessages(Locale locale) {
-        this(locale, BUNDLE_NAME);
     }
 
     public String get(String key) {

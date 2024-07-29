@@ -3,7 +3,6 @@ package org.github.aanno.pgconv.impl
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Attribute
-import org.jsoup.nodes.Attributes
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.safety.Safelist
