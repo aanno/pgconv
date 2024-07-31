@@ -118,15 +118,17 @@ class CrawlAndRemoveContentDropdown(
                 if (realHead != null) {
                     realHead.select("link").remove()
                     realHead.select("script").remove()
+                } else {
+                    logger.warn("uncleaned document has no header tag: ${page}")
                 }
-                logger.debug("readHead: ${realHead}")
+                // logger.debug("readHead: ${realHead}")
                 doc = CLEANER.clean(doc)
                 val cleanedHead = doc.selectFirst("head")
                 if (cleanedHead != null) {
-                    // remove all children
-                    cleanedHead.select("*").remove()
-                    cleanedHead.appendChildren(realHead!!.select("*").clone())
-                    logger.debug("cleanedHead: ${cleanedHead}")
+                    cleanedHead.appendChildren(realHead!!.children())
+                    // logger.debug("cleanedHead: ${cleanedHead}")
+                } else {
+                    logger.warn("cleaned document has no header tag: ${page}")
                 }
             }
             // does _not_ really set baseUri
