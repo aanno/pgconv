@@ -38,6 +38,7 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
         if (ref == null) {
             return book.addSection(title, getResource(href))
         } else {
+            // ref is the parent section
             return book.addSection(ref, title, getResource(href))
         }
     }

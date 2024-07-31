@@ -1,17 +1,17 @@
 # pgconv
 
-A converter for projekt-gutenberg.org html books.
+A converter for projekt-gutenberg.org html books to EPUB (for ebook readers).
 
 ## Usage
 
 ```bash
 $ ./pgconv-1.0-SNAPSHOT/bin/pgconv --help
-Usage: command [<options>] <url>
-
-Options:
-  --no-readablility4j=true|false    don't process html with Readability4J
-  --write-interim-files=true|false  write interim result (html pages) to disk
-  -h, --help                        Show this message and exit
+  --no-readablility4j=true|false  don't process html with Readability4J
+  --write-interim-files=true|false
+                                  write interim result (html pages) to disk
+  --no-jsoup-cleaner=true|false   don't clean/sanitize with JSoup clean
+  --no-epub-checker=true|false    don't run EPUBChecker on generated epub file
+  -h, --help                      Show this message and exit
 
 Arguments:
   <url>  URL to book main page on https://www.projekt-gutenberg.org/ e.g.
@@ -60,11 +60,20 @@ See [usage](https://github.com/gutenbergtools/ebookmaker/blob/master/USAGE.md) f
 
 ## Links to other projects
 
+### EPUB format and specification
+
+* https://de.wikipedia.org/wiki/EPUB
+* https://epubknowledge.com/docs/welcome
+* https://kb.daisy.org/publishing/docs/epub/
+
 ### Other epub tools
 
 * [open source ebook creators](https://medevel.com/17-open-source-epub-and-ebook-creators/)
-* https://github.com/NiklasGollenstede/epub-creator
-* https://transpect.github.io/modules-epubtools-frontend.html
+* https://github.com/NiklasGollenstede/epub-creator (js, firefox add-on)
+* https://transpect.github.io/modules-epubtools-frontend.html (java, xproc, epub2/3)
+* https://github.com/documentnode/epub4j (java, only epub2)
+* https://github.com/seeseekey/epubwriter (java, only epub3)
+* https://github.com/w3c/epubcheck
 
 ### Other conversion tools
 

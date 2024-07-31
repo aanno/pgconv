@@ -5,6 +5,11 @@
     <option name="PROGRAM_PARAMETERS" value="https://www.projekt-gutenberg.org/jeanpaul/badereis/badereis.html" />
     <shortenClasspath name="ARGS_FILE" />
     <option name="VM_PARAMETERS" value="--add-opens org.github.aanno.pgconv/org.github.aanno.pgconv=ALL-UNNAMED --add-opens org.github.aanno.pgconv/org.github.aanno.pgconv.impl=ALL-UNNAMED --add-reads org.github.aanno.pgconv=ALL-UNNAMED" />
+    <extension name="software.aws.toolkits.jetbrains.core.execution.JavaAwsConnectionExtension">
+      <option name="credential" />
+      <option name="region" />
+      <option name="useCurrentConnection" value="false" />
+    </extension>
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
