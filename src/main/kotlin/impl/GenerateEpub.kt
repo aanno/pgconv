@@ -93,7 +93,11 @@ private class EpubLazyResourceProvider(private val path2Document: MutableMap<Str
         if (doc == null) {
             throw IllegalArgumentException("href ${href} not found")
         }
-        return ByteArrayInputStream(doc.document.outerHtml().toByteArray())
+        val document = doc.document
+        if (doc.head != null) {
+            document.selectFirst("head").appendChildren(doc.head.children())
+        }
+        return ByteArrayInputStream(document.outerHtml().toByteArray())
     }
 
 }

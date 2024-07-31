@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
 
-internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
+internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val head: Element, val metaTags: MetaTags)
 
 private val WAIT_MS = 2000;
 private val CLEANER = Cleaner(mySafelist())
@@ -106,6 +106,7 @@ class CrawlAndRemoveContentDropdown(
             lastAction.set(System.currentTimeMillis())
             // https://jsoup.org/cookbook/cleaning-html/safelist-sanitizer
             var doc: Document = connectWithProxyEnv(base + "/" + page).get()
+            val realHead = doc.selectFirst("head")
             if (!noJsoupCleaner) {
                 // when doing jsoup cleaning, also preserve uncleaned files
                 if (writeInterimFiles) {
@@ -114,13 +115,13 @@ class CrawlAndRemoveContentDropdown(
                     }
                 }
                 // cleaner has the bug to remove all of head (meta, title, link, script, ...)
-                val realHead = doc.selectFirst("head")
                 if (realHead != null) {
                     realHead.select("link").remove()
                     realHead.select("script").remove()
                 }
                 logger.debug("readHead: ${realHead}")
                 doc = CLEANER.clean(doc)
+                /*
                 val cleanedHead = doc.selectFirst("head")
                 if (cleanedHead != null) {
                     // remove all children
@@ -128,6 +129,7 @@ class CrawlAndRemoveContentDropdown(
                     cleanedHead.appendChildren(realHead!!.select("*").clone())
                     logger.debug("cleanedHead: ${cleanedHead}")
                 }
+                 */
             }
             // does _not_ really set baseUri
             doc.setBaseUri(base)
@@ -183,7 +185,7 @@ class CrawlAndRemoveContentDropdown(
             logger.debug(headers)
              */
 
-            readability.send(ReadabilityDocument(page, doc, meta))
+            readability.send(ReadabilityDocument(page, doc, realHead, meta))
         }
     }
 
@@ -213,7 +215,7 @@ class CrawlAndRemoveContentDropdown(
             doc = ReadabilityDocument(
                 doc.hrefPath, article.getContentWithEncodingAsElement(
                     "utf-8", rd.metaTags
-                ), doc.metaTags
+                ), doc.head, doc.metaTags
             )
             // val extractedContentPlainText: String = article.getTextContent()
             val title = article.title
