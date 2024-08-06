@@ -4,7 +4,7 @@ import impl.MetaTags
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import net.dankito.readability4j.extended.Readability4JExtended
-import org.apache.logging.log4j.kotlin.Logging
+import org.apache.logging.log4j.kotlin.logger
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.Nullable
+import kotlin.random.Random
 
 internal data class ReadabilityDocument(val hrefPath: String, val document: Document, val metaTags: MetaTags)
 
@@ -30,7 +31,10 @@ class CrawlAndRemoveContentDropdown(
     private val writeInterimFiles: Boolean = false,
     private val noJsoupCleaner: Boolean = false
 ) {
-    companion object : Logging
+    companion object {
+        val logger = logger()
+        val random = Random.Default
+    }
 
     private var root: String? = null
 
@@ -46,6 +50,8 @@ class CrawlAndRemoveContentDropdown(
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
 
     private val tocPageProcessed = AtomicBoolean(false)
+
+    private val id = GenerateId(random, 10, 4)
 
     fun parseOld() {
         val doc: Document = Jsoup.connect("https://en.wikipedia.org/").get()
@@ -180,12 +186,28 @@ class CrawlAndRemoveContentDropdown(
             parseNav(page, doc)
             val meta = MetaTags.of(doc)
 
-            /*
             val headers: Elements = doc.select("h1, h2, h3, h4, h5")
-            logger.debug(headers)
-             */
+            // logger.debug("headers: ${headers}")
+            headers.forEach {
+                addIdToHeaderIfNeeded(it)
+            }
 
             readability.send(ReadabilityDocument(page, doc, meta))
+        }
+    }
+
+    private fun addIdToHeaderIfNeeded(header: Element) {
+        val old = header.attribute("id")
+        val content = header.text()
+        if (!content.isEmpty()) {
+            if (old == null) {
+                val identifier = id.buildNew(content)
+                if (id != null) {
+                    header.attr("id", identifier)
+                }
+            } else {
+                id.put(content, old.value)
+            }
         }
     }
 

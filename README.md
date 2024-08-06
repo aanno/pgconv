@@ -32,7 +32,7 @@ unzip build/distributions/pgconv-1.0-SNAPSHOT.zip
 
 ## News
 
-* 28.07.2024 Now uses `io.documentnode:epub4j-core` instead of `ebookmaker`.
+* 28.07.2024 Now uses `io.documentnode:epub4j-core` from https://github.com/documentnode/epub4j instead of `ebookmaker`.
 
 ## Obsolete
 
@@ -84,9 +84,11 @@ See [usage](https://github.com/gutenbergtools/ebookmaker/blob/master/USAGE.md) f
 
 ### Alternatives to jsoup
 
+* https://www.baeldung.com/java-with-jsoup
 * https://github.com/digitalfondue/jfiveparse
 * https://github.com/codelibs/nekohtml
 * https://github.com/peteroupc/HtmlParser
+* https://htmlcleaner.sourceforge.net/
 
 ### Kotlin Coroutines
 
