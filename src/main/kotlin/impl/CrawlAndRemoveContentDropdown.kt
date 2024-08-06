@@ -46,6 +46,7 @@ class CrawlAndRemoveContentDropdown(
     private val visitedPages: MutableSet<String> = ConcurrentSkipListSet<String>()
     private val path2Document: MutableMap<String, ReadabilityDocument> =
         ConcurrentSkipListMap<String, ReadabilityDocument>()
+    private val path2Title: MutableMap<String, String> = ConcurrentSkipListMap()
 
     private val readability = Channel<ReadabilityDocument>(Channel.UNLIMITED)
 
@@ -96,7 +97,7 @@ class CrawlAndRemoveContentDropdown(
             logger.info("sequence: ${sequence.size} ${sequence}")
             // logger.info("path2Document: ${path2Document}")
             val generator = GenerateEpub(path2Document)
-            generator.add(sequence)
+            generator.add(sequence, path2Title)
             val idx = root.indexOf('.')
             val outFilename = root.substring(0, idx) + ".epub"
             outFile = File(outFilename)
@@ -188,6 +189,12 @@ class CrawlAndRemoveContentDropdown(
 
             val headers: Elements = doc.select("h1, h2, h3, h4, h5")
             // logger.debug("headers: ${headers}")
+            // associate path with first header
+            headers.first()?.let {
+                it.text()?.let {
+                    path2Title.put(page, it)
+                }
+            }
             headers.forEach {
                 addIdToHeaderIfNeeded(it)
             }
@@ -206,6 +213,7 @@ class CrawlAndRemoveContentDropdown(
                     header.attr("id", identifier)
                 }
             } else {
+                // this may fail
                 id.put(content, old.value)
             }
         }

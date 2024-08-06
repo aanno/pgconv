@@ -21,7 +21,7 @@ class GenerateId(val random: Random, val titleLen: Int, val hashLen: Int) {
         ConcurrentSkipListMap<String,String>()
 
     fun build(title: String): String {
-        if (title.length == 0) {
+        if (title.isNullOrEmpty()) {
             throw IllegalArgumentException("title must not be empty")
         }
         val t = shortenTitle(title)

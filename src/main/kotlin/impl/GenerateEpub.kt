@@ -43,7 +43,7 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
         }
     }
 
-    internal fun add(sequence: List<String>) {
+    internal fun add(sequence: List<String>, path2Title: MutableMap<String, String>) {
         if (sequence.size < 1 || path2Document.size < 1 || sequence.size > path2Document.size) {
             val pages = HashSet(sequence)
             pages.removeAll(path2Document.keys)
@@ -61,7 +61,12 @@ class GenerateEpub internal constructor(private val path2Document: MutableMap<St
         sequence.forEach {
             val document2 = path2Document[it]
             if (document2 != null) {
-                addSection(it, document2.hrefPath)
+                val title = path2Title[it]
+                if (!title.isNullOrEmpty()) {
+                    addSection(title, document2.hrefPath)
+                } else {
+                    addSection(it, document2.hrefPath)
+                }
             }
         }
     }
